@@ -105,14 +105,20 @@ function decodeFromPaste() {
 // ── Core render ───────────────────────────────────────────────────────────────
 /**
  * FIX 2: Validate the string BEFORE setting img.src.
- * The old code set img.src then waited for onerror — but some malformed
- * strings caused silent failures or wrong MIME detection that produced
- * the "could not decode" error even on valid data.
+ * FIX MOBILE: Mobile browsers (iOS Safari, Android Chrome) silently fail when
+ * img.src is set to a data URL longer than ~2MB. The fix is to convert the
+ * base64 data URL into a Blob and use URL.createObjectURL() instead — Blob
+ * URLs have no length limit and work reliably on all mobile browsers.
+ *
+ * We also store the mime type and approx byte size on the img element so
+ * downloadDecoded() can read them without re-parsing the (possibly huge) src.
  */
 function renderDecoded(raw) {
   const errEl = document.getElementById('decodeErr');
   errEl.style.display = 'none';
-  let src = '';
+
+  let mime  = '';
+  let b64   = '';
 
   if (raw.startsWith('data:')) {
     const ci = raw.indexOf(',');
@@ -122,48 +128,57 @@ function renderDecoded(raw) {
       announce('Error: invalid data URL format.');
       return;
     }
-    // Rebuild cleanly: header unchanged, base64 body with whitespace stripped
-    const header  = raw.substring(0, ci + 1).trim();
-    const b64body = raw.substring(ci + 1).replace(/\s/g, '');
-
-    // Validate the base64 body is non-empty and valid characters only
-    if (!b64body || !/^[A-Za-z0-9+/]+=*$/.test(b64body.substring(0, 32))) {
-      errEl.style.display = 'block';
-      errEl.textContent   = '⚠ The pasted string appears to be incomplete or corrupted. Make sure you copied the full string.';
-      announce('Error: base64 string appears corrupted.');
-      return;
-    }
-
-    src = header + b64body;
-
+    // Extract mime from header, e.g. "data:image/png;base64,"
+    const header = raw.substring(0, ci);
+    const mMatch = header.match(/^data:([^;,]+)/);
+    mime  = mMatch ? mMatch[1] : 'image/jpeg';
+    b64   = raw.substring(ci + 1).replace(/\s/g, '');
   } else {
-    // Raw base64 — strip whitespace and validate
-    const clean = raw.replace(/\s/g, '');
-
-    if (clean.length < 16) {
-      errEl.style.display = 'block';
-      errEl.textContent   = '⚠ String is too short to be a valid encoded image.';
-      announce('Error: string too short.');
-      return;
-    }
-
-    if (!/^[A-Za-z0-9+/]+=*$/.test(clean.substring(0, 64))) {
-      errEl.style.display = 'block';
-      errEl.textContent   = '⚠ This does not look like a valid base64 string. Make sure you copied the full encoded string.';
-      announce('Error: not a valid base64 string.');
-      return;
-    }
-
-    src = 'data:' + detectMime(clean) + ';base64,' + clean;
+    b64  = raw.replace(/\s/g, '');
+    mime = detectMime(b64);
   }
 
-  const img = document.getElementById('decodedImg');
+  // Basic validation
+  if (b64.length < 16) {
+    errEl.style.display = 'block';
+    errEl.textContent   = '⚠ String is too short to be a valid encoded image.';
+    announce('Error: string too short.');
+    return;
+  }
+  if (!/^[A-Za-z0-9+/]+=*$/.test(b64.substring(0, 64))) {
+    errEl.style.display = 'block';
+    errEl.textContent   = '⚠ This does not look like a valid base64 string. Make sure you copied the full encoded string.';
+    announce('Error: not a valid base64 string.');
+    return;
+  }
+
+  // ── Convert base64 → Blob → Object URL ───────────────────────────────────
+  // This is the mobile fix: avoids the ~2MB data URL limit on iOS/Android.
+  let blobURL = '';
+  try {
+    const binary = atob(b64);
+    const bytes  = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const blob = new Blob([bytes], { type: mime });
+    blobURL = URL.createObjectURL(blob);
+  } catch (e) {
+    errEl.style.display = 'block';
+    errEl.textContent   = '⚠ Could not decode the image — the string may be corrupted or incomplete.';
+    announce('Error: could not decode image.');
+    return;
+  }
+
+  const img        = document.getElementById('decodedImg');
+  const approxBytes = Math.ceil(b64.length * 0.75);
+
+  // Clean up any previous blob URL to avoid memory leaks
+  if (img._blobURL) URL.revokeObjectURL(img._blobURL);
+  img._blobURL  = blobURL;
+  img._mime     = mime;
+  img._approxBytes = approxBytes;
 
   img.onload = () => {
-    const m      = src.match(/^data:([^;,]+)/);
-    const fmt    = m ? m[1].split('/').pop().toUpperCase() : 'IMG';
-    const b64len = src.length - src.indexOf(',') - 1;
-    const approxBytes = Math.ceil(b64len * 0.75);
+    const fmt = mime.split('/').pop().toUpperCase();
 
     document.getElementById('decodedMeta').textContent =
       fmt + ' · ~' + formatBytes(approxBytes) +
@@ -180,43 +195,44 @@ function renderDecoded(raw) {
   };
 
   img.onerror = () => {
+    URL.revokeObjectURL(blobURL);
+    img._blobURL = '';
     errEl.style.display = 'block';
-    errEl.textContent =
-      '⚠ Could not decode the image. The string may be incomplete — ' +
-      'make sure you copied the entire base64 string from start to finish. ' +
-      'The Download PNG method is more reliable for large images.';
-    announce('Error: could not decode the image.');
-    // Clear the broken src so it does not show a broken image icon
+    errEl.textContent   =
+      '⚠ Could not display the image. The encoded string may be incomplete — ' +
+      'make sure you copied it in full. The Download PNG method is more reliable for large images.';
+    announce('Error: could not display the decoded image.');
     img.src = '';
   };
 
-  img.src = src;
+  img.src = blobURL;
 }
 
 // ── Download decoded image ────────────────────────────────────────────────────
-/**
- * FIX 4: Append <a> to DOM before .click() — same fix as downloadStringImage.
- * Detached anchors silently fail to trigger downloads in most browsers.
- */
 function downloadDecoded() {
   const img = document.getElementById('decodedImg');
-  if (!img.src || img.src === window.location.href) return;
+  if (!img._blobURL) return;
+
+  // Derive a sensible file extension from the stored mime type
+  const ext  = (img._mime || 'image/jpeg').split('/').pop().replace('jpeg', 'jpg');
+  const name = 'restored-image.' + ext;
 
   const a    = document.createElement('a');
-  a.href     = img.src;
-  a.download = 'restored-image';
+  a.href     = img._blobURL;
+  a.download = name;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
 
-  announce('Download started: restored image.');
+  announce('Download started: ' + name);
 }
 
 function clearDecode() {
   document.getElementById('pasteArea').value = '';
-  document.getElementById('decodeErr').style.display   = 'none';
+  document.getElementById('decodeErr').style.display    = 'none';
   document.getElementById('decodedResult').style.display = 'none';
   const img = document.getElementById('decodedImg');
+  if (img._blobURL) { URL.revokeObjectURL(img._blobURL); img._blobURL = ''; }
   img.src = '';
   announce('Cleared paste area.');
 }
