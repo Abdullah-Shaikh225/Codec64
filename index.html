@@ -18,7 +18,7 @@
   <div class="orb orb-b" aria-hidden="true"></div>
   <div class="orb orb-c" aria-hidden="true"></div>
 
-  <!-- Hidden ARIA live region — screen readers announce state changes here -->
+  <!-- Hidden ARIA live region -->
   <div id="liveRegion" role="status" aria-live="polite" aria-atomic="true"
        style="position:absolute;width:1px;height:1px;overflow:hidden;
               clip:rect(0,0,0,0);white-space:nowrap;"></div>
@@ -109,7 +109,7 @@
           </div>
         </div>
 
-        <!-- ── Save section (shown after encoding) ─────────────────────── -->
+        <!-- ── Save section ────────────────────────────────────────────── -->
         <div class="save-section" id="saveSection" aria-label="Save options">
 
           <div class="big-save">
@@ -143,7 +143,7 @@
 
                 <div class="ac ac-teal" onclick="doSavePNG(this)" id="pngCard"
                      role="button" tabindex="0"
-                     aria-label="Download encoded image as PNG file"
+                     aria-label="Build encoded PNG file for download"
                      onkeydown="if(event.key==='Enter'||event.key===' ')doSavePNG(this)">
                   <div class="ac-icon" aria-hidden="true">💾</div>
                   <div class="ac-title">Download as File</div>
@@ -151,29 +151,43 @@
                     Saves a PNG to your device. Upload it below later and your
                     image comes back instantly.
                   </div>
-                  <div class="ac-badge" id="pngBadge" aria-live="polite">Tap to download</div>
-                </div>
-              </div>
-
-              <!-- Generated PNG download preview -->
-              <div class="gen-preview" id="genPreview" aria-label="Generated PNG file preview">
-                <div class="gen-prev-head">
-                  <div class="dot dot-p" aria-hidden="true"></div>
-                  base64-string.png is ready
-                </div>
-                <canvas id="stringCanvas" aria-hidden="true"></canvas>
-                <div class="gen-prev-foot">
-                  <span id="genMeta">—</span>
-                  <button class="btn btn-pink btn-sm" onclick="downloadStringImage()"
-                          aria-label="Download the generated PNG file">
-                    ⬇ Download PNG
-                  </button>
+                  <div class="ac-badge" id="pngBadge" aria-live="polite">Tap to build PNG</div>
                 </div>
               </div>
 
               <div class="alert alert-ok" id="copyAlert" role="status" aria-live="polite">
                 ✓ Copied to clipboard! Scroll down to the Restore section and paste it.
               </div>
+
+              <!-- ── PNG download panel (hidden until PNG is built) ──────── -->
+              <div id="pngDownloadPanel" style="display:none;margin-top:18px;">
+                <div class="big-save" style="border-color:rgba(106,255,219,.3);">
+                  <div class="big-save-head" style="background:linear-gradient(135deg,rgba(106,255,219,.1),rgba(124,106,255,.07));">
+                    <div class="big-save-icon" aria-hidden="true">📦</div>
+                    <div>
+                      <div class="big-save-title" style="color:var(--teal);">PNG is ready!</div>
+                      <div class="big-save-sub">
+                        Your image is hidden inside this file. Click the button below to save it.
+                      </div>
+                    </div>
+                  </div>
+                  <div class="big-save-body">
+                    <p>
+                      <strong>How to restore later:</strong> come back to this page and upload
+                      this PNG file — your original image will come back instantly with no
+                      quality loss.
+                    </p>
+                    <div class="row" style="margin-top:0;">
+                      <button class="btn btn-primary" onclick="downloadStringImage()"
+                              aria-label="Download the generated PNG file to your device">
+                        ⬇ Download PNG file
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- /pngDownloadPanel -->
+
             </div>
           </div><!-- /big-save -->
 
@@ -193,7 +207,7 @@
       </div><!-- /card-body -->
     </div><!-- /encodeCard -->
 
-    <!-- ══════════ DECODE CARD ═══════════════════════════════════════════════ -->
+    <!-- ══════════ DECODE CARD ════════════════════════════════════════════════ -->
     <div class="section-divide" aria-hidden="true">
       <span>Step 3 — Restore your image</span>
     </div>
@@ -239,7 +253,7 @@
 
         <div class="alert alert-err" id="decodeErr" role="alert" aria-live="assertive"></div>
 
-        <!-- Paste fallback (collapsed by default) -->
+        <!-- Paste fallback -->
         <details style="margin-top:22px;">
           <summary style="cursor:pointer;font-family:var(--mono);font-size:11px;
                           color:var(--muted2);padding:8px 0;list-style:none;
@@ -288,10 +302,7 @@
     <div class="adv-panel" id="advPanel" role="region" aria-label="Advanced developer tools">
       <div class="adv-inner">
 
-        <!-- Raw base64 string preview -->
-        <div class="slabel" style="margin-bottom:8px;" aria-hidden="true">
-          Raw base64 string
-        </div>
+        <div class="slabel" style="margin-bottom:8px;" aria-hidden="true">Raw base64 string</div>
         <div style="position:relative;">
           <div class="raw-box" id="rawBox">
             <span id="rawPreview">Upload an image to see the raw string.</span>
@@ -306,7 +317,6 @@
           </button>
         </div>
 
-        <!-- Code snippet tabs -->
         <div style="margin-top:24px;">
           <div class="slabel" style="margin-bottom:8px;" aria-hidden="true">
             Code snippets — ready to paste into your project
@@ -344,7 +354,6 @@
           </div>
         </div>
 
-        <!-- Encoding stats -->
         <div style="margin-top:24px;">
           <div class="slabel" style="margin-bottom:10px;" aria-hidden="true">Stats</div>
           <div class="stat-row" aria-label="Encoding statistics">
@@ -378,12 +387,17 @@
     <span id="toastMsg">Done!</span>
   </div>
 
-  <!-- ── Scripts — load order matters:
-         1. ui.js        defines state, announce, setStep, formatBytes, mobileClipboard
-         2. pngHandler.js defines readPNGTextChunk, buildPNGChunk (used by encoder + decoder)
-         3. encoder.js   depends on ui.js + pngHandler.js
-         4. decoder.js   depends on ui.js + pngHandler.js + encoder.js (detectMime)
-  ───────────────────────────────────────────────────────────────────────────── -->
+  <!-- Hidden canvas used by encoder -->
+  <canvas id="stringCanvas" aria-hidden="true"
+          style="position:absolute;left:-9999px;top:-9999px;pointer-events:none;"></canvas>
+
+  <!-- Floating download button — shown after PNG is built, requires user click -->
+  <button id="floatingDownload" onclick="downloadStringImage()"
+          aria-label="Download the generated PNG file">
+    ⬇ Download PNG
+  </button>
+
+  <!-- Scripts — load order matters -->
   <script src="static/js/ui.js"></script>
   <script src="static/js/pngHandler.js"></script>
   <script src="static/js/encoder.js"></script>
