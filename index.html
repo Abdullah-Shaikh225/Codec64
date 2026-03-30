@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Base64 Image Codec</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="static/css/styles.css">
+</head>
+<body>
+
+  <!-- Decorative background elements -->
+  <div class="orb orb-a" aria-hidden="true"></div>
+  <div class="orb orb-b" aria-hidden="true"></div>
+  <div class="orb orb-c" aria-hidden="true"></div>
+
+  <!-- Hidden ARIA live region — screen readers announce state changes here -->
+  <div id="liveRegion" role="status" aria-live="polite" aria-atomic="true"
+       style="position:absolute;width:1px;height:1px;overflow:hidden;
+              clip:rect(0,0,0,0);white-space:nowrap;"></div>
+
+  <div class="wrap">
+
+    <!-- ── Header ─────────────────────────────────────────────────────────── -->
+    <header>
+      <div class="eyebrow" aria-hidden="true">Image Codec</div>
+      <h1>Base64<br>Image Codec</h1>
+      <p class="tagline">
+        Turn any image into a portable text — save it, share it,<br>
+        get your image back anytime.
+      </p>
+    </header>
+
+    <!-- ── Step indicator ─────────────────────────────────────────────────── -->
+    <nav class="steps" id="stepIndicator" aria-label="Progress steps">
+      <div class="step-item">
+        <div class="step-num active" id="sn1"
+             aria-current="step" aria-label="Step 1: Upload — current step">1</div>
+        <div class="step-label" aria-hidden="true">Upload</div>
+      </div>
+      <div class="step-line" id="sl1" aria-hidden="true"></div>
+      <div class="step-item">
+        <div class="step-num" id="sn2" aria-label="Step 2: Save — not yet reached">2</div>
+        <div class="step-label" aria-hidden="true">Save</div>
+      </div>
+      <div class="step-line" id="sl2" aria-hidden="true"></div>
+      <div class="step-item">
+        <div class="step-num" id="sn3" aria-label="Step 3: Restore — not yet reached">3</div>
+        <div class="step-label" aria-hidden="true">Restore</div>
+      </div>
+    </nav>
+
+    <!-- ══════════ ENCODE CARD ══════════════════════════════════════════════ -->
+    <div class="card" id="encodeCard">
+      <div class="card-shine" aria-hidden="true"></div>
+      <div class="card-body">
+
+        <div class="slabel" aria-hidden="true">Step 1 — Upload your image</div>
+
+        <!-- CORS proxy privacy notice -->
+        <div class="proxy-notice" role="note" aria-label="Privacy notice">
+          <span aria-hidden="true">⚠</span>
+          <span>
+            <strong>Privacy note:</strong> Loading images via URL routes through
+            <strong>corsproxy.io</strong>, a third-party CORS proxy. Your image URL will be
+            visible to that service. For sensitive images, use the file upload instead —
+            it stays entirely in your browser.
+          </span>
+        </div>
+
+        <!-- URL input row -->
+        <div class="url-row">
+          <label for="urlInput" class="sr-only"
+                 style="position:absolute;width:1px;height:1px;overflow:hidden;
+                        clip:rect(0,0,0,0);">Image URL</label>
+          <input type="text" class="url-inp" id="urlInput"
+                 placeholder="Or paste an image URL — https://example.com/photo.jpg"
+                 aria-describedby="urlErr">
+          <button class="btn btn-teal" onclick="fetchFromURL()" id="urlBtn"
+                  aria-label="Load image from URL">↗ Load</button>
+        </div>
+        <div class="alert alert-err" id="urlErr" role="alert" aria-live="assertive"></div>
+
+        <div class="or-div" aria-hidden="true"><span>or drop / browse a file</span></div>
+
+        <!-- File drop zone -->
+        <div class="drop-zone" id="dropZone" role="region"
+             aria-label="Image upload area — drag and drop or click to browse">
+          <input type="file" accept="image/*" id="fileInput"
+                 onchange="handleFile(this.files[0])"
+                 aria-label="Choose an image file">
+          <div class="drop-icon" aria-hidden="true">🖼️</div>
+          <h3>Drop your image here</h3>
+          <p>PNG · JPG · WEBP · GIF · SVG — any format</p>
+        </div>
+
+        <div class="size-warn" id="sizeWarn" role="note"></div>
+
+        <!-- Image preview strip -->
+        <div class="img-strip" id="imgStrip" aria-label="Image preview">
+          <img id="previewImg" src="" alt="Preview of selected image">
+          <div class="img-strip-foot">
+            <span id="imgName">—</span>
+            <span id="imgSize">—</span>
+          </div>
+        </div>
+
+        <!-- ── Save section (shown after encoding) ─────────────────────── -->
+        <div class="save-section" id="saveSection" aria-label="Save options">
+
+          <div class="big-save">
+            <div class="big-save-head">
+              <div class="big-save-icon" aria-hidden="true">✅</div>
+              <div>
+                <div class="big-save-title">Image encoded — now save it</div>
+                <div class="big-save-sub">
+                  Choose how you want to keep your image. You can always restore it later.
+                </div>
+              </div>
+            </div>
+
+            <div class="big-save-body">
+              <p>Your image has been turned into a <strong>text string</strong>.
+                 Pick one or both ways to save it:</p>
+
+              <div class="action-cards">
+                <div class="ac ac-teal" onclick="doCopy(this)" id="copyCard"
+                     role="button" tabindex="0"
+                     aria-label="Copy encoded image to clipboard"
+                     onkeydown="if(event.key==='Enter'||event.key===' ')doCopy(this)">
+                  <div class="ac-icon" aria-hidden="true">📋</div>
+                  <div class="ac-title">Copy to Clipboard</div>
+                  <div class="ac-desc">
+                    Paste into Notes, WhatsApp, email — any app.
+                    Best for quick sharing right now.
+                  </div>
+                  <div class="ac-badge" id="copyBadge" aria-live="polite">Tap to copy</div>
+                </div>
+
+                <div class="ac ac-teal" onclick="doSavePNG(this)" id="pngCard"
+                     role="button" tabindex="0"
+                     aria-label="Download encoded image as PNG file"
+                     onkeydown="if(event.key==='Enter'||event.key===' ')doSavePNG(this)">
+                  <div class="ac-icon" aria-hidden="true">💾</div>
+                  <div class="ac-title">Download as File</div>
+                  <div class="ac-desc">
+                    Saves a PNG to your device. Upload it below later and your
+                    image comes back instantly.
+                  </div>
+                  <div class="ac-badge" id="pngBadge" aria-live="polite">Tap to download</div>
+                </div>
+              </div>
+
+              <!-- Generated PNG download preview -->
+              <div class="gen-preview" id="genPreview" aria-label="Generated PNG file preview">
+                <div class="gen-prev-head">
+                  <div class="dot dot-p" aria-hidden="true"></div>
+                  base64-string.png is ready
+                </div>
+                <canvas id="stringCanvas" aria-hidden="true"></canvas>
+                <div class="gen-prev-foot">
+                  <span id="genMeta">—</span>
+                  <button class="btn btn-pink btn-sm" onclick="downloadStringImage()"
+                          aria-label="Download the generated PNG file">
+                    ⬇ Download PNG
+                  </button>
+                </div>
+              </div>
+
+              <div class="alert alert-ok" id="copyAlert" role="status" aria-live="polite">
+                ✓ Copied to clipboard! Scroll down to the Restore section and paste it.
+              </div>
+            </div>
+          </div><!-- /big-save -->
+
+          <div class="row" style="margin-top:14px;">
+            <button class="btn btn-ghost btn-sm" onclick="quickDecode()"
+                    aria-label="Test: immediately restore your image to verify the encoding">
+              ⚡ Test — restore image now
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="clearAll()"
+                    aria-label="Start over with a new image">
+              ✕ Start over
+            </button>
+          </div>
+
+        </div><!-- /save-section -->
+
+      </div><!-- /card-body -->
+    </div><!-- /encodeCard -->
+
+    <!-- ══════════ DECODE CARD ═══════════════════════════════════════════════ -->
+    <div class="section-divide" aria-hidden="true">
+      <span>Step 3 — Restore your image</span>
+    </div>
+
+    <div class="card" id="decodeCard">
+      <div class="card-shine" aria-hidden="true"></div>
+      <div class="card-body">
+
+        <div class="slabel" aria-hidden="true">
+          Upload the file you saved — your image will come back
+        </div>
+
+        <!-- PNG file drop zone -->
+        <div class="decode-drop" id="decodeDrop" role="region"
+             aria-label="Restore area — upload the PNG file you saved to recover your image">
+          <input type="file" accept="image/png" id="pngInput"
+                 onchange="handlePngUpload(this.files[0])"
+                 aria-label="Choose the saved PNG file to restore your image">
+          <div class="drop-icon" aria-hidden="true">📄</div>
+          <h3 id="dropTitle">Upload the saved PNG file</h3>
+          <p id="dropSub">The file downloaded from this tool — your image is hidden inside it</p>
+          <div class="instant-badge" aria-hidden="true">⚡ instant — no quality loss</div>
+        </div>
+
+        <div class="alert alert-ok" id="pngOk" role="status" aria-live="polite"></div>
+        <div class="alert alert-err" id="pngErr" role="alert" aria-live="assertive"></div>
+
+        <!-- Decoded image result -->
+        <div class="decoded-result" id="decodedResult" aria-label="Restored image">
+          <div class="decoded-head">
+            <div class="dot dot-g" aria-hidden="true"></div>
+            Image restored successfully
+          </div>
+          <img id="decodedImg" src="" alt="Your restored image">
+          <div class="decoded-foot">
+            <span id="decodedMeta">—</span>
+            <button class="btn btn-ghost btn-sm" onclick="downloadDecoded()"
+                    aria-label="Download the restored image to your device">
+              ⬇ Download Image
+            </button>
+          </div>
+        </div>
+
+        <div class="alert alert-err" id="decodeErr" role="alert" aria-live="assertive"></div>
+
+        <!-- Paste fallback (collapsed by default) -->
+        <details style="margin-top:22px;">
+          <summary style="cursor:pointer;font-family:var(--mono);font-size:11px;
+                          color:var(--muted2);padding:8px 0;list-style:none;
+                          display:flex;align-items:center;gap:8px;outline:none;">
+            <span style="font-size:13px;transition:transform .2s;">▸</span>
+            &nbsp;I copied the string instead — paste it here to restore
+          </summary>
+          <label for="pasteArea"
+                 style="position:absolute;width:1px;height:1px;overflow:hidden;
+                        clip:rect(0,0,0,0);">
+            Paste your base64 encoded image string here
+          </label>
+          <textarea class="paste-area" id="pasteArea"
+                    placeholder="Paste your base64 string here…&#10;&#10;Works with full data URLs (data:image/png;base64,…) or raw base64 text."
+                    aria-describedby="decodeErr"></textarea>
+          <div class="row">
+            <button class="btn btn-primary" onclick="decodeFromPaste()"
+                    aria-label="Restore image from pasted base64 string">
+              🔍 Restore image
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="clearDecode()"
+                    aria-label="Clear the pasted string">
+              ✕ Clear
+            </button>
+          </div>
+        </details>
+
+      </div><!-- /card-body -->
+    </div><!-- /decodeCard -->
+
+    <!-- ══════════ ADVANCED / DEVELOPER PANEL ════════════════════════════════ -->
+    <div class="adv-toggle" id="advToggle"
+         onclick="toggleAdv()" tabindex="0" role="button"
+         aria-expanded="false" aria-controls="advPanel"
+         onkeydown="if(event.key==='Enter'||event.key===' ')toggleAdv()">
+      <div class="adv-left">
+        <div class="adv-icon" aria-hidden="true">⚙️</div>
+        <div>
+          <div class="adv-label">Advanced / Developer Tools</div>
+          <div class="adv-sub">Raw string · HTML img · CSS bg · Markdown · JSON · Stats</div>
+        </div>
+      </div>
+      <div class="adv-arr" id="advArr" aria-hidden="true">▼</div>
+    </div>
+
+    <div class="adv-panel" id="advPanel" role="region" aria-label="Advanced developer tools">
+      <div class="adv-inner">
+
+        <!-- Raw base64 string preview -->
+        <div class="slabel" style="margin-bottom:8px;" aria-hidden="true">
+          Raw base64 string
+        </div>
+        <div style="position:relative;">
+          <div class="raw-box" id="rawBox">
+            <span id="rawPreview">Upload an image to see the raw string.</span>
+            <div class="fade" aria-hidden="true"></div>
+          </div>
+          <div class="copy-flash" id="rawFlash" aria-hidden="true"></div>
+        </div>
+        <div class="row">
+          <button class="btn btn-teal btn-sm" onclick="copyRaw()"
+                  aria-label="Copy raw base64 string to clipboard">
+            📋 Copy raw string
+          </button>
+        </div>
+
+        <!-- Code snippet tabs -->
+        <div style="margin-top:24px;">
+          <div class="slabel" style="margin-bottom:8px;" aria-hidden="true">
+            Code snippets — ready to paste into your project
+          </div>
+          <div class="snip-tabs" role="tablist" aria-label="Code snippet format">
+            <button class="snip-btn active" role="tab" aria-selected="true"
+                    aria-controls="snipPanel" onclick="setSnip('html',this)">
+              HTML &lt;img&gt;
+            </button>
+            <button class="snip-btn" role="tab" aria-selected="false"
+                    aria-controls="snipPanel" onclick="setSnip('css',this)">
+              CSS bg
+            </button>
+            <button class="snip-btn" role="tab" aria-selected="false"
+                    aria-controls="snipPanel" onclick="setSnip('md',this)">
+              Markdown
+            </button>
+            <button class="snip-btn" role="tab" aria-selected="false"
+                    aria-controls="snipPanel" onclick="setSnip('json',this)">
+              JSON
+            </button>
+          </div>
+          <div style="position:relative;">
+            <div class="snip-box" id="snipPanel" role="tabpanel">
+              <span id="snipContent">Upload an image above to generate snippets.</span>
+              <div class="fade" aria-hidden="true"></div>
+            </div>
+            <div class="copy-flash" id="snipFlash" aria-hidden="true"></div>
+          </div>
+          <div class="row">
+            <button class="btn btn-teal btn-sm" onclick="copySnip()"
+                    aria-label="Copy current code snippet to clipboard">
+              📋 Copy snippet
+            </button>
+          </div>
+        </div>
+
+        <!-- Encoding stats -->
+        <div style="margin-top:24px;">
+          <div class="slabel" style="margin-bottom:10px;" aria-hidden="true">Stats</div>
+          <div class="stat-row" aria-label="Encoding statistics">
+            <div class="stat">
+              <div class="lbl">Characters</div>
+              <div class="val" id="stChars" aria-label="Character count">—</div>
+            </div>
+            <div class="stat">
+              <div class="lbl">Encoded size</div>
+              <div class="val" id="stSize" aria-label="Encoded size">—</div>
+            </div>
+            <div class="stat">
+              <div class="lbl">Format</div>
+              <div class="val" id="stFmt" aria-label="Image format">—</div>
+            </div>
+            <div class="stat">
+              <div class="lbl">Overhead</div>
+              <div class="val" id="stOh" aria-label="Base64 overhead percentage">—</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /adv-inner -->
+    </div><!-- /adv-panel -->
+
+  </div><!-- /wrap -->
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true">
+    <span aria-hidden="true">✓</span>
+    <span id="toastMsg">Done!</span>
+  </div>
+
+  <!-- ── Scripts — load order matters:
+         1. ui.js        defines state, announce, setStep, formatBytes, mobileClipboard
+         2. pngHandler.js defines readPNGTextChunk, buildPNGChunk (used by encoder + decoder)
+         3. encoder.js   depends on ui.js + pngHandler.js
+         4. decoder.js   depends on ui.js + pngHandler.js + encoder.js (detectMime)
+  ───────────────────────────────────────────────────────────────────────────── -->
+  <script src="static/js/ui.js"></script>
+  <script src="static/js/pngHandler.js"></script>
+  <script src="static/js/encoder.js"></script>
+  <script src="static/js/decoder.js"></script>
+
+</body>
+</html>
