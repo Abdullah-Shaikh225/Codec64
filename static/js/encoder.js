@@ -190,6 +190,38 @@ function doSavePNG(card) {
 }
 
 /**
+ * Walks the PNG chunk list to find where the IHDR chunk ends.
+ * Returns the byte offset immediately after IHDR's CRC (i.e. the first byte
+ * of the next chunk), which is where we insert our tEXt chunk.
+ * @param {Uint8Array} bytes  Raw PNG file bytes
+ * @returns {number} Byte offset of the end of the IHDR chunk
+ */
+function findIHDRend(bytes) {
+  let offset = 8; // skip PNG signature
+
+  while (offset < bytes.length) {
+    if (offset + 8 > bytes.length) break;
+
+    const length = (bytes[offset] << 24 | bytes[offset+1] << 16 | bytes[offset+2] << 8 | bytes[offset+3]) >>> 0;
+    const type = String.fromCharCode(bytes[offset+4], bytes[offset+5], bytes[offset+6], bytes[offset+7]);
+
+    if (type === 'IHDR') {
+      return offset + 8 + length + 4;
+    }
+
+    // safety: prevent infinite loop
+    if (length <= 0 || length > bytes.length) break;
+
+    offset += 12 + length;
+  }
+
+  console.warn("IHDR not found, using fallback offset");
+
+  // fallback to standard position
+  return 33;
+}
+
+/**
  * Renders the base64 string as a visible text image on a canvas, then injects
  * the raw string into a PNG tEXt metadata chunk so pngHandler.js can recover it.
  *
@@ -268,10 +300,16 @@ function buildStringPNG(text) {
 
   // keyword + NUL separator + data (all latin1 — see encoding note above)
   const chunkData = strToBytes('b64codec\0' + text);
-  const chunk     = buildPNGChunk('tEXt', chunkData);
+  const chunk     = _buildPNGChunk('tEXt', chunkData);
 
-  // Insert tEXt chunk immediately after the IHDR chunk (bytes 0–32)
-  const IHDR_END = 33;
+  // Insert tEXt chunk immediately after the IHDR chunk (dynamic offset)
+  let IHDR_END = findIHDRend(pngBytes);
+  if (IHDR_END <= 8 || IHDR_END > pngBytes.length) {
+    console.warn("Invalid IHDR offset, using fallback");
+    IHDR_END = 33;
+  }
+  // Final bounds clamp — guarantee slice indices are always valid
+  IHDR_END = Math.min(IHDR_END, pngBytes.length);
   const final = new Uint8Array(pngBytes.length + chunk.length);
   final.set(pngBytes.slice(0, IHDR_END));
   final.set(chunk, IHDR_END);
@@ -354,4 +392,58 @@ function detectMime(b64) {
     if (b[0] === 0x3C)                  return 'image/svg+xml';
   } catch (e) { /* fall through */ }
   return 'image/jpeg';
+}
+
+// ── Self-contained PNG chunk builder ─────────────────────────────────────────
+// Inlined here so encoder.js has zero dependency on pngHandler.js for writing.
+
+/** Pre-computed CRC32 lookup table. */
+const _crcTable = (() => {
+  const t = new Uint32Array(256);
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[i] = c;
+  }
+  return t;
+})();
+
+/** Computes CRC32 over a Uint8Array slice [start, end). */
+function _crc32(buf, start, end) {
+  let c = 0xFFFFFFFF;
+  for (let i = start; i < end; i++) c = _crcTable[(c ^ buf[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+
+/**
+ * Builds a valid PNG chunk: [length(4)] [type(4)] [data] [crc(4)].
+ * Fully self-contained — does not call any external helper.
+ * @param {string}     type   4-character ASCII chunk type (e.g. 'tEXt')
+ * @param {Uint8Array} data   Raw chunk data bytes
+ * @returns {Uint8Array}      Complete chunk ready to splice into a PNG
+ */
+function _buildPNGChunk(type, data) {
+  const len   = data.length;
+  const chunk = new Uint8Array(12 + len);
+
+  // Length (big-endian uint32)
+  chunk[0] = (len >>> 24) & 0xFF;
+  chunk[1] = (len >>> 16) & 0xFF;
+  chunk[2] = (len >>>  8) & 0xFF;
+  chunk[3] =  len         & 0xFF;
+
+  // Type (4 ASCII bytes)
+  for (let i = 0; i < 4; i++) chunk[4 + i] = type.charCodeAt(i) & 0xFF;
+
+  // Data
+  chunk.set(data, 8);
+
+  // CRC over type + data
+  const crc = _crc32(chunk, 4, 8 + len);
+  chunk[8  + len] = (crc >>> 24) & 0xFF;
+  chunk[9  + len] = (crc >>> 16) & 0xFF;
+  chunk[10 + len] = (crc >>>  8) & 0xFF;
+  chunk[11 + len] =  crc         & 0xFF;
+
+  return chunk;
 }
