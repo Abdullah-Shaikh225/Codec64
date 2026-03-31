@@ -1,16 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Base64 Image Codec</title>
 
   <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap"
+    rel="stylesheet">
 
   <!-- Styles -->
   <link rel="stylesheet" href="static/css/styles.css">
 </head>
+
 <body>
 
   <!-- Decorative background elements -->
@@ -19,8 +23,7 @@
   <div class="orb orb-c" aria-hidden="true"></div>
 
   <!-- Hidden ARIA live region -->
-  <div id="liveRegion" role="status" aria-live="polite" aria-atomic="true"
-       style="position:absolute;width:1px;height:1px;overflow:hidden;
+  <div id="liveRegion" role="status" aria-live="polite" aria-atomic="true" style="position:absolute;width:1px;height:1px;overflow:hidden;
               clip:rect(0,0,0,0);white-space:nowrap;"></div>
 
   <div class="wrap">
@@ -38,8 +41,7 @@
     <!-- ── Step indicator ─────────────────────────────────────────────────── -->
     <nav class="steps" id="stepIndicator" aria-label="Progress steps">
       <div class="step-item">
-        <div class="step-num active" id="sn1"
-             aria-current="step" aria-label="Step 1: Upload — current step">1</div>
+        <div class="step-num active" id="sn1" aria-current="step" aria-label="Step 1: Upload — current step">1</div>
         <div class="step-label" aria-hidden="true">Upload</div>
       </div>
       <div class="step-line" id="sl1" aria-hidden="true"></div>
@@ -74,14 +76,12 @@
 
         <!-- URL input row -->
         <div class="url-row">
-          <label for="urlInput" class="sr-only"
-                 style="position:absolute;width:1px;height:1px;overflow:hidden;
+          <label for="urlInput" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;
                         clip:rect(0,0,0,0);">Image URL</label>
           <input type="text" class="url-inp" id="urlInput"
-                 placeholder="Or paste an image URL — https://example.com/photo.jpg"
-                 aria-describedby="urlErr">
-          <button class="btn btn-teal" onclick="fetchFromURL()" id="urlBtn"
-                  aria-label="Load image from URL">↗ Load</button>
+            placeholder="Or paste an image URL — https://example.com/photo.jpg" aria-describedby="urlErr">
+          <button class="btn btn-teal" onclick="fetchFromURL()" id="urlBtn" aria-label="Load image from URL">↗
+            Load</button>
         </div>
         <div class="alert alert-err" id="urlErr" role="alert" aria-live="assertive"></div>
 
@@ -89,10 +89,9 @@
 
         <!-- File drop zone -->
         <div class="drop-zone" id="dropZone" role="region"
-             aria-label="Image upload area — drag and drop or click to browse">
-          <input type="file" accept="image/*" id="fileInput"
-                 onchange="handleFile(this.files[0])"
-                 aria-label="Choose an image file">
+          aria-label="Image upload area — drag and drop or click to browse">
+          <input type="file" accept="image/*" id="fileInput" onchange="handleFile(this.files[0])"
+            aria-label="Choose an image file">
           <div class="drop-icon" aria-hidden="true">🖼️</div>
           <h3>Drop your image here</h3>
           <p>PNG · JPG · WEBP · GIF · SVG — any format</p>
@@ -125,13 +124,12 @@
 
             <div class="big-save-body">
               <p>Your image has been turned into a <strong>text string</strong>.
-                 Pick one or both ways to save it:</p>
+                Pick one or both ways to save it:</p>
 
               <div class="action-cards">
-                <div class="ac ac-teal" onclick="doCopy(this)" id="copyCard"
-                     role="button" tabindex="0"
-                     aria-label="Copy encoded image to clipboard"
-                     onkeydown="if(event.key==='Enter'||event.key===' ')doCopy(this)">
+                <div class="ac ac-teal" onclick="doCopy(this)" id="copyCard" role="button" tabindex="0"
+                  aria-label="Copy encoded image to clipboard"
+                  onkeydown="if(event.key==='Enter'||event.key===' ')doCopy(this)">
                   <div class="ac-icon" aria-hidden="true">📋</div>
                   <div class="ac-title">Copy to Clipboard</div>
                   <div class="ac-desc">
@@ -141,10 +139,9 @@
                   <div class="ac-badge" id="copyBadge" aria-live="polite">Tap to copy</div>
                 </div>
 
-                <div class="ac ac-teal" onclick="doSavePNG(this)" id="pngCard"
-                     role="button" tabindex="0"
-                     aria-label="Build encoded PNG file for download"
-                     onkeydown="if(event.key==='Enter'||event.key===' ')doSavePNG(this)">
+                <div class="ac ac-teal" onclick="doSavePNG(this)" id="pngCard" role="button" tabindex="0"
+                  aria-label="Build encoded PNG file for download"
+                  onkeydown="if(event.key==='Enter'||event.key===' ')doSavePNG(this)">
                   <div class="ac-icon" aria-hidden="true">💾</div>
                   <div class="ac-title">Download as File</div>
                   <div class="ac-desc">
@@ -162,7 +159,8 @@
               <!-- ── PNG download panel (hidden until PNG is built) ──────── -->
               <div id="pngDownloadPanel" style="display:none;margin-top:18px;">
                 <div class="big-save" style="border-color:rgba(106,255,219,.3);">
-                  <div class="big-save-head" style="background:linear-gradient(135deg,rgba(106,255,219,.1),rgba(124,106,255,.07));">
+                  <div class="big-save-head"
+                    style="background:linear-gradient(135deg,rgba(106,255,219,.1),rgba(124,106,255,.07));">
                     <div class="big-save-icon" aria-hidden="true">📦</div>
                     <div>
                       <div class="big-save-title" style="color:var(--teal);">PNG is ready!</div>
@@ -179,7 +177,7 @@
                     </p>
                     <div class="row" style="margin-top:0;">
                       <button class="btn btn-primary" onclick="downloadStringImage()"
-                              aria-label="Download the generated PNG file to your device">
+                        aria-label="Download the generated PNG file to your device">
                         ⬇ Download PNG file
                       </button>
                     </div>
@@ -193,11 +191,10 @@
 
           <div class="row" style="margin-top:14px;">
             <button class="btn btn-ghost btn-sm" onclick="quickDecode()"
-                    aria-label="Test: immediately restore your image to verify the encoding">
+              aria-label="Test: immediately restore your image to verify the encoding">
               ⚡ Test — restore image now
             </button>
-            <button class="btn btn-ghost btn-sm" onclick="clearAll()"
-                    aria-label="Start over with a new image">
+            <button class="btn btn-ghost btn-sm" onclick="clearAll()" aria-label="Start over with a new image">
               ✕ Start over
             </button>
           </div>
@@ -222,10 +219,9 @@
 
         <!-- PNG file drop zone -->
         <div class="decode-drop" id="decodeDrop" role="region"
-             aria-label="Restore area — upload the PNG file you saved to recover your image">
-          <input type="file" accept="image/png" id="pngInput"
-                 onchange="handlePngUpload(this.files[0])"
-                 aria-label="Choose the saved PNG file to restore your image">
+          aria-label="Restore area — upload the PNG file you saved to recover your image">
+          <input type="file" accept="image/png" id="pngInput" onchange="handlePngUpload(this.files[0])"
+            aria-label="Choose the saved PNG file to restore your image">
           <div class="drop-icon" aria-hidden="true">📄</div>
           <h3 id="dropTitle">Upload the saved PNG file</h3>
           <p id="dropSub">The file downloaded from this tool — your image is hidden inside it</p>
@@ -245,7 +241,7 @@
           <div class="decoded-foot">
             <span id="decodedMeta">—</span>
             <button class="btn btn-ghost btn-sm" onclick="downloadDecoded()"
-                    aria-label="Download the restored image to your device">
+              aria-label="Download the restored image to your device">
               ⬇ Download Image
             </button>
           </div>
@@ -261,21 +257,19 @@
             <span style="font-size:13px;transition:transform .2s;">▸</span>
             &nbsp;I copied the string instead — paste it here to restore
           </summary>
-          <label for="pasteArea"
-                 style="position:absolute;width:1px;height:1px;overflow:hidden;
+          <label for="pasteArea" style="position:absolute;width:1px;height:1px;overflow:hidden;
                         clip:rect(0,0,0,0);">
             Paste your base64 encoded image string here
           </label>
           <textarea class="paste-area" id="pasteArea"
-                    placeholder="Paste your base64 string here…&#10;&#10;Works with full data URLs (data:image/png;base64,…) or raw base64 text."
-                    aria-describedby="decodeErr"></textarea>
+            placeholder="Paste your base64 string here…&#10;&#10;Works with full data URLs (data:image/png;base64,…) or raw base64 text."
+            aria-describedby="decodeErr"></textarea>
           <div class="row">
             <button class="btn btn-primary" onclick="decodeFromPaste()"
-                    aria-label="Restore image from pasted base64 string">
+              aria-label="Restore image from pasted base64 string">
               🔍 Restore image
             </button>
-            <button class="btn btn-ghost btn-sm" onclick="clearDecode()"
-                    aria-label="Clear the pasted string">
+            <button class="btn btn-ghost btn-sm" onclick="clearDecode()" aria-label="Clear the pasted string">
               ✕ Clear
             </button>
           </div>
@@ -284,11 +278,88 @@
       </div><!-- /card-body -->
     </div><!-- /decodeCard -->
 
+    <!-- ══════════ IMAGE CONVERTER CARD ══════════════════════════════════════ -->
+    <div class="section-divide" aria-hidden="true">
+      <span>Image Converter — any format to JPEG / PNG / WEBP</span>
+    </div>
+
+    <div class="card" id="converterCard">
+      <div class="card-shine" aria-hidden="true"></div>
+      <div class="card-body">
+
+        <div class="slabel" aria-hidden="true">Convert · Download · or send straight to Encoder</div>
+
+        <!-- Hint banner — shown when encoder redirects here -->
+        <div class="alert alert-warn" id="convHint" style="display:none;margin-bottom:14px;" role="note"></div>
+
+        <!-- Converter drop zone -->
+        <div class="conv-drop" id="convDrop" role="region"
+          aria-label="Image converter — drop any image to convert its format">
+          <input type="file" accept="image/*" id="convFileInput" onchange="handleConverterFile(this.files[0])"
+            aria-label="Choose an image to convert">
+          <div class="drop-icon" aria-hidden="true">🔄</div>
+          <h3 id="convDropTitle">Drop any image here</h3>
+          <p id="convDropSub">JPEG · PNG · WEBP · GIF · BMP · SVG</p>
+        </div>
+
+        <!-- Status + error -->
+        <div id="convStatus"
+          style="display:none;margin-top:12px;font-family:var(--mono);font-size:12px;color:var(--muted2);"></div>
+        <div class="alert alert-err" id="convErr" style="display:none;" role="alert" aria-live="assertive"></div>
+
+        <!-- Result panel -->
+        <div id="convResult" style="display:none;margin-top:20px;">
+
+          <!-- Format pills -->
+          <div class="slabel" style="margin-bottom:10px;" aria-hidden="true">Output format</div>
+          <div class="conv-fmt-row" role="group" aria-label="Choose output format">
+            <button class="conv-fmt-btn active" onclick="setConverterFormat('jpeg', this)"
+              aria-pressed="true">JPEG</button>
+            <button class="conv-fmt-btn" onclick="setConverterFormat('png', this)" aria-pressed="false">PNG</button>
+            <button class="conv-fmt-btn" onclick="setConverterFormat('webp', this)" aria-pressed="false">WEBP</button>
+          </div>
+
+          <!-- Quality slider (hidden for PNG) -->
+          <div class="conv-quality-row" id="convQualityRow">
+            <span class="conv-quality-label">Quality</span>
+            <input type="range" id="convQualitySlider" min="10" max="100" value="85"
+              oninput="setConverterQuality(this.value)" aria-label="Output quality percentage">
+            <span id="convQualityVal" class="conv-quality-val">85%</span>
+          </div>
+
+          <!-- Preview -->
+          <div class="conv-preview-wrap">
+            <div class="conv-preview-head">
+              <div class="dot dot-p" aria-hidden="true"></div>
+              <span id="convInfo">—</span>
+            </div>
+            <img id="convPreviewImg" src="" alt="Converted image preview" style="width:100%;max-height:280px;object-fit:contain;
+                        background:var(--surface2);display:block;">
+          </div>
+
+          <!-- Action buttons -->
+          <div class="conv-actions">
+            <button class="btn btn-primary" onclick="sendConverterToEncoder()"
+              aria-label="Use this converted image in the encoder">
+              ⬆ Use in Encoder
+            </button>
+            <button class="btn btn-teal" onclick="downloadConverted()" aria-label="Download the converted image">
+              ⬇ Download Image
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="clearConverter()"
+              aria-label="Clear and start over in converter">
+              ✕ Clear
+            </button>
+          </div>
+
+        </div><!-- /convResult -->
+
+      </div><!-- /card-body -->
+    </div><!-- /converterCard -->
+
     <!-- ══════════ ADVANCED / DEVELOPER PANEL ════════════════════════════════ -->
-    <div class="adv-toggle" id="advToggle"
-         onclick="toggleAdv()" tabindex="0" role="button"
-         aria-expanded="false" aria-controls="advPanel"
-         onkeydown="if(event.key==='Enter'||event.key===' ')toggleAdv()">
+    <div class="adv-toggle" id="advToggle" onclick="toggleAdv()" tabindex="0" role="button" aria-expanded="false"
+      aria-controls="advPanel" onkeydown="if(event.key==='Enter'||event.key===' ')toggleAdv()">
       <div class="adv-left">
         <div class="adv-icon" aria-hidden="true">⚙️</div>
         <div>
@@ -311,8 +382,7 @@
           <div class="copy-flash" id="rawFlash" aria-hidden="true"></div>
         </div>
         <div class="row">
-          <button class="btn btn-teal btn-sm" onclick="copyRaw()"
-                  aria-label="Copy raw base64 string to clipboard">
+          <button class="btn btn-teal btn-sm" onclick="copyRaw()" aria-label="Copy raw base64 string to clipboard">
             📋 Copy raw string
           </button>
         </div>
@@ -322,20 +392,20 @@
             Code snippets — ready to paste into your project
           </div>
           <div class="snip-tabs" role="tablist" aria-label="Code snippet format">
-            <button class="snip-btn active" role="tab" aria-selected="true"
-                    aria-controls="snipPanel" onclick="setSnip('html',this)">
+            <button class="snip-btn active" role="tab" aria-selected="true" aria-controls="snipPanel"
+              onclick="setSnip('html',this)">
               HTML &lt;img&gt;
             </button>
-            <button class="snip-btn" role="tab" aria-selected="false"
-                    aria-controls="snipPanel" onclick="setSnip('css',this)">
+            <button class="snip-btn" role="tab" aria-selected="false" aria-controls="snipPanel"
+              onclick="setSnip('css',this)">
               CSS bg
             </button>
-            <button class="snip-btn" role="tab" aria-selected="false"
-                    aria-controls="snipPanel" onclick="setSnip('md',this)">
+            <button class="snip-btn" role="tab" aria-selected="false" aria-controls="snipPanel"
+              onclick="setSnip('md',this)">
               Markdown
             </button>
-            <button class="snip-btn" role="tab" aria-selected="false"
-                    aria-controls="snipPanel" onclick="setSnip('json',this)">
+            <button class="snip-btn" role="tab" aria-selected="false" aria-controls="snipPanel"
+              onclick="setSnip('json',this)">
               JSON
             </button>
           </div>
@@ -348,7 +418,7 @@
           </div>
           <div class="row">
             <button class="btn btn-teal btn-sm" onclick="copySnip()"
-                    aria-label="Copy current code snippet to clipboard">
+              aria-label="Copy current code snippet to clipboard">
               📋 Copy snippet
             </button>
           </div>
@@ -389,11 +459,10 @@
 
   <!-- Hidden canvas used by encoder -->
   <canvas id="stringCanvas" aria-hidden="true"
-          style="position:absolute;left:-9999px;top:-9999px;pointer-events:none;"></canvas>
+    style="position:absolute;left:-9999px;top:-9999px;pointer-events:none;"></canvas>
 
   <!-- Floating download button — shown after PNG is built, requires user click -->
-  <button id="floatingDownload" onclick="downloadStringImage()"
-          aria-label="Download the generated PNG file">
+  <button id="floatingDownload" onclick="downloadStringImage()" aria-label="Download the generated PNG file">
     ⬇ Download PNG
   </button>
 
@@ -402,6 +471,8 @@
   <script src="static/js/pngHandler.js"></script>
   <script src="static/js/encoder.js"></script>
   <script src="static/js/decoder.js"></script>
+  <script src="static/js/converter.js"></script>
 
 </body>
+
 </html>
