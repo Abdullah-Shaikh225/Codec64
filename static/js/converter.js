@@ -48,11 +48,22 @@ function isHEICFile(file) {
  * The pixel data is raw RGBA (4 bytes per pixel), stride = width * 4.
  */
 async function decodeHEICToCanvas(file) {
-    // 1. Make sure libheif is available (loaded via <script> in index.html)
+    // Wait up to 10 seconds for LibHeif to finish loading (WASM init on mobile can be slow)
     if (typeof LibHeif === 'undefined') {
-        throw new Error(
-            'libheif-js is not loaded. Make sure the script tag is in index.html.'
-        );
+        await new Promise((resolve, reject) => {
+            const start = Date.now();
+            const check = setInterval(() => {
+                if (typeof LibHeif !== 'undefined') {
+                    clearInterval(check);
+                    resolve();
+                } else if (Date.now() - start > 10000) {
+                    clearInterval(check);
+                    reject(new Error(
+                        'HEIC decoder failed to load. Please check your internet connection and try again.'
+                    ));
+                }
+            }, 100);
+        });
     }
 
     // 2. Read the file into an ArrayBuffer
