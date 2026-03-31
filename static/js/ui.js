@@ -265,6 +265,10 @@ function formatBytes(n) {
 
 function showView(viewId) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+
+  const floatingBtn = document.getElementById('floatingDownload');
+  if (floatingBtn) floatingBtn.style.display = 'none';
+
   const target = document.getElementById(viewId);
   if (target) target.classList.add('active');
 

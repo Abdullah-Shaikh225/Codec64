@@ -393,6 +393,7 @@ function downloadStringImage() {
     setTimeout(() => URL.revokeObjectURL(url), 10000);
     showToast('Opened in new tab — long-press image to save.');
     announce('Opened PNG in new tab. Long-press to save.');
+    document.getElementById('floatingDownload').style.display = 'none';
     return;
   }
 
@@ -409,6 +410,7 @@ function downloadStringImage() {
 
   showToast('Downloading base64-string.png…');
   announce('Download started: base64-string.png');
+  document.getElementById('floatingDownload').style.display = 'none';
 }
 
 function quickDecode() {
