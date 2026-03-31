@@ -88,7 +88,21 @@ function handleFile(file) {
 
   tempImg.onerror = () => {
     URL.revokeObjectURL(blobURL);
-    warnEl.innerHTML = '⚠ Could not read this image. Please try a different file or format.';
+    const name = file.name.toLowerCase();
+    const type = (file.type || '').toLowerCase();
+    const isHEIC = name.endsWith('.heic') || name.endsWith('.heif') ||
+      type.includes('heic') || type.includes('heif');
+    if (isHEIC) {
+      warnEl.innerHTML =
+        '⚠ HEIC photos cannot be processed directly in the browser. ' +
+        'On your iPhone: open the photo in Photos app → tap Share → Save Image as JPEG. ' +
+        'Or go to Settings → Camera → Formats → tap <strong>Most Compatible</strong> ' +
+        'so future photos save as JPEG automatically.';
+    } else {
+      warnEl.innerHTML =
+        '⚠ This file could not be loaded as an image. ' +
+        'Please try a JPEG, PNG, WEBP, or GIF file.';
+    }
     announce('Error: could not read image file.');
   };
 
