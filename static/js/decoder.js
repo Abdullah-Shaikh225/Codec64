@@ -16,13 +16,13 @@
 function handlePngUpload(file) {
   if (!file) return;
 
-  const okEl  = document.getElementById('pngOk');
+  const okEl = document.getElementById('pngOk');
   const errEl = document.getElementById('pngErr');
-  okEl.style.display  = 'none';
+  okEl.style.display = 'none';
   errEl.style.display = 'none';
   document.getElementById('decodedResult').style.display = 'none';
   document.getElementById('dropTitle').textContent = file.name;
-  document.getElementById('dropSub').textContent   = 'Reading hidden data…';
+  document.getElementById('dropSub').textContent = 'Reading hidden data…';
   announce('Reading hidden data from ' + file.name + '…');
 
   const reader = new FileReader();
@@ -52,7 +52,7 @@ function handlePngUpload(file) {
       }
 
       okEl.style.display = 'block';
-      okEl.textContent   = '⚡ Hidden data found — restoring your image…';
+      okEl.textContent = '⚡ Hidden data found — restoring your image…';
       showToast('⚡ Found it — restoring!');
       announce('Hidden data found. Restoring your image…');
 
@@ -64,7 +64,7 @@ function handlePngUpload(file) {
 
     } catch (e2) {
       errEl.style.display = 'block';
-      errEl.textContent   = '⚠ ' + e2.message;
+      errEl.textContent = '⚠ ' + e2.message;
       announce('Error: ' + e2.message);
       resetDropZone();
     }
@@ -72,7 +72,7 @@ function handlePngUpload(file) {
 
   reader.onerror = () => {
     errEl.style.display = 'block';
-    errEl.textContent   = '⚠ Could not read the file. Please try again.';
+    errEl.textContent = '⚠ Could not read the file. Please try again.';
     announce('Error reading file.');
     resetDropZone();
   };
@@ -82,20 +82,20 @@ function handlePngUpload(file) {
 
 function resetDropZone() {
   document.getElementById('dropTitle').textContent = 'Upload the saved PNG file';
-  document.getElementById('dropSub').textContent   =
+  document.getElementById('dropSub').textContent =
     'The file downloaded from this tool — your image is hidden inside it';
   document.getElementById('pngInput').value = '';
 }
 
 // ── Paste decode ──────────────────────────────────────────────────────────────
 function decodeFromPaste() {
-  const raw   = document.getElementById('pasteArea').value.trim();
+  const raw = document.getElementById('pasteArea').value.trim();
   const errEl = document.getElementById('decodeErr');
   errEl.style.display = 'none';
 
   if (!raw) {
     errEl.style.display = 'block';
-    errEl.textContent   = '⚠ Nothing pasted yet.';
+    errEl.textContent = '⚠ Nothing pasted yet.';
     announce('Error: please paste a base64 string first.');
     return;
   }
@@ -117,64 +117,79 @@ function renderDecoded(raw) {
   const errEl = document.getElementById('decodeErr');
   errEl.style.display = 'none';
 
-  let mime  = '';
-  let b64   = '';
+  let mime = '';
+  let b64 = '';
 
   if (raw.startsWith('data:')) {
     const ci = raw.indexOf(',');
     if (ci === -1) {
       errEl.style.display = 'block';
-      errEl.textContent   = '⚠ Invalid data URL — no comma separator found.';
+      errEl.textContent = '⚠ Invalid data URL — no comma separator found.';
       announce('Error: invalid data URL format.');
       return;
     }
     // Extract mime from header, e.g. "data:image/png;base64,"
     const header = raw.substring(0, ci);
     const mMatch = header.match(/^data:([^;,]+)/);
-    mime  = mMatch ? mMatch[1] : 'image/jpeg';
-    b64   = raw.substring(ci + 1).replace(/\s/g, '');
+    mime = mMatch ? mMatch[1] : 'image/jpeg';
+    b64 = raw.substring(ci + 1).replace(/\s/g, '');
   } else {
-    b64  = raw.replace(/\s/g, '');
+    b64 = raw.replace(/\s/g, '');
     mime = detectMime(b64);
   }
 
   // Basic validation
   if (b64.length < 16) {
     errEl.style.display = 'block';
-    errEl.textContent   = '⚠ String is too short to be a valid encoded image.';
+    errEl.textContent = '⚠ String is too short to be a valid encoded image.';
     announce('Error: string too short.');
     return;
   }
   if (!/^[A-Za-z0-9+/]+=*$/.test(b64.substring(0, 64))) {
     errEl.style.display = 'block';
-    errEl.textContent   = '⚠ This does not look like a valid base64 string. Make sure you copied the full encoded string.';
+    errEl.textContent = '⚠ This does not look like a valid base64 string. Make sure you copied the full encoded string.';
     announce('Error: not a valid base64 string.');
     return;
   }
 
   // ── Convert base64 → Blob → Object URL ───────────────────────────────────
-  // This is the mobile fix: avoids the ~2MB data URL limit on iOS/Android.
+  // MOBILE FIX: Never call atob() on the full string — on mobile Safari/Chrome
+  // a large atob() call (~3MB+) allocates a huge JS string all at once and
+  // crashes silently, triggering onerror even on valid data.
+  //
+  // Instead we decode in 64KB chunks, writing each chunk into a Uint8Array
+  // segment, then assemble them all into a single Blob. Memory stays flat.
   let blobURL = '';
   try {
-    const binary = atob(b64);
-    const bytes  = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    const blob = new Blob([bytes], { type: mime });
+    const CHUNK = 65536; // 64KB of base64 chars per iteration
+    const parts = [];
+    let offset = 0;
+
+    while (offset < b64.length) {
+      const slice = b64.slice(offset, offset + CHUNK);
+      const binary = atob(slice);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      parts.push(bytes);
+      offset += CHUNK;
+    }
+
+    const blob = new Blob(parts, { type: mime });
     blobURL = URL.createObjectURL(blob);
   } catch (e) {
     errEl.style.display = 'block';
-    errEl.textContent   = '⚠ Could not decode the image — the string may be corrupted or incomplete.';
+    errEl.textContent = '⚠ Could not decode the image — the string may be corrupted or incomplete.';
     announce('Error: could not decode image.');
     return;
   }
 
-  const img        = document.getElementById('decodedImg');
+  const img = document.getElementById('decodedImg');
   const approxBytes = Math.ceil(b64.length * 0.75);
 
   // Clean up any previous blob URL to avoid memory leaks
   if (img._blobURL) URL.revokeObjectURL(img._blobURL);
-  img._blobURL  = blobURL;
-  img._mime     = mime;
+  img._blobURL = blobURL;
+  img._mime = mime;
   img._approxBytes = approxBytes;
 
   img.onload = () => {
@@ -198,7 +213,7 @@ function renderDecoded(raw) {
     URL.revokeObjectURL(blobURL);
     img._blobURL = '';
     errEl.style.display = 'block';
-    errEl.textContent   =
+    errEl.textContent =
       '⚠ Could not display the image. The encoded string may be incomplete — ' +
       'make sure you copied it in full. The Download PNG method is more reliable for large images.';
     announce('Error: could not display the decoded image.');
@@ -214,11 +229,11 @@ function downloadDecoded() {
   if (!img._blobURL) return;
 
   // Derive a sensible file extension from the stored mime type
-  const ext  = (img._mime || 'image/jpeg').split('/').pop().replace('jpeg', 'jpg');
+  const ext = (img._mime || 'image/jpeg').split('/').pop().replace('jpeg', 'jpg');
   const name = 'restored-image.' + ext;
 
-  const a    = document.createElement('a');
-  a.href     = img._blobURL;
+  const a = document.createElement('a');
+  a.href = img._blobURL;
   a.download = name;
   document.body.appendChild(a);
   a.click();
@@ -229,7 +244,7 @@ function downloadDecoded() {
 
 function clearDecode() {
   document.getElementById('pasteArea').value = '';
-  document.getElementById('decodeErr').style.display    = 'none';
+  document.getElementById('decodeErr').style.display = 'none';
   document.getElementById('decodedResult').style.display = 'none';
   const img = document.getElementById('decodedImg');
   if (img._blobURL) { URL.revokeObjectURL(img._blobURL); img._blobURL = ''; }

@@ -15,9 +15,9 @@
 
 // ── URL fetch ─────────────────────────────────────────────────────────────────
 async function fetchFromURL() {
-  const url    = document.getElementById('urlInput').value.trim();
-  const errEl  = document.getElementById('urlErr');
-  const btn    = document.getElementById('urlBtn');
+  const url = document.getElementById('urlInput').value.trim();
+  const errEl = document.getElementById('urlErr');
+  const btn = document.getElementById('urlBtn');
   errEl.style.display = 'none';
 
   if (!url) {
@@ -54,32 +54,96 @@ async function fetchFromURL() {
 }
 
 // ── File handler ──────────────────────────────────────────────────────────────
+/**
+ * Normalizes ANY image format (HEIC, JPEG, WEBP, GIF, PNG, SVG…) to a PNG
+ * data URL via an off-screen canvas, then continues as before.
+ *
+ * Why canvas normalization?
+ *  - HEIC (iPhone photos): FileReader gives raw HEIC bytes. The browser can
+ *    *display* HEIC but atob() on raw HEIC bytes produces garbage on decode.
+ *    Drawing to canvas → toDataURL('image/png') gives clean, universal bytes.
+ *  - Large JPEGs: same atob() memory-crash risk on mobile. Canvas re-encodes
+ *    them as PNG which is handled safely by the chunked decoder.
+ *  - Caps resolution at 1280px on the longest side — keeps encoded strings
+ *    small and fast, well within mobile memory limits.
+ *
+ * The canvas approach is always used — it's the only path that works reliably
+ * on iOS Safari, Android Chrome, and desktop browsers for all input types.
+ */
+const MAX_PX = 1280; // longest side cap
+
 function handleFile(file) {
   if (!file) return;
   const warnEl = document.getElementById('sizeWarn');
+  warnEl.style.display = 'none';
 
-  if (file.size > 5 * 1024 * 1024) {
-    warnEl.style.display = 'block';
-    warnEl.innerHTML = '⚠ Large file (' + formatBytes(file.size) + '): encoded string will be ~' +
-      formatBytes(Math.ceil(file.size * 1.37)) +
-      '. Clipboard copy may fail — the Download PNG option is safer.';
-  } else if (file.size > 500 * 1024) {
-    warnEl.style.display = 'block';
-    warnEl.innerHTML = 'ℹ Medium file (' + formatBytes(file.size) + '): encoded string will be ~' +
-      formatBytes(Math.ceil(file.size * 1.37)) + '. Both save options will work fine.';
-  } else {
-    warnEl.style.display = 'none';
-  }
+  // Show a "processing" badge while the canvas normalizes the image
+  warnEl.style.display = 'block';
+  warnEl.innerHTML = '⏳ Processing image…';
 
-  const reader = new FileReader();
-  reader.onload = e => {
-    state.encoded = e.target.result;
+  // Step 1: load file into a blob URL so the browser decodes it
+  // (works for HEIC, JPEG, WEBP, PNG, GIF, SVG — anything the browser supports)
+  const blobURL = URL.createObjectURL(file);
+  const tempImg = new Image();
 
-    const img = document.getElementById('previewImg');
-    img.src = state.encoded;
-    img.alt = 'Preview of ' + file.name;
+  tempImg.onerror = () => {
+    URL.revokeObjectURL(blobURL);
+    warnEl.innerHTML = '⚠ Could not read this image. Please try a different file or format.';
+    announce('Error: could not read image file.');
+  };
+
+  tempImg.onload = () => {
+    URL.revokeObjectURL(blobURL);
+
+    // Step 2: scale down if needed, keeping aspect ratio
+    let w = tempImg.naturalWidth;
+    let h = tempImg.naturalHeight;
+    if (w > MAX_PX || h > MAX_PX) {
+      if (w >= h) { h = Math.round(h * MAX_PX / w); w = MAX_PX; }
+      else { w = Math.round(w * MAX_PX / h); h = MAX_PX; }
+    }
+
+    // Step 3: draw onto canvas → get PNG data URL
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    // White background so transparent PNGs don't decode to black on some decoders
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(tempImg, 0, 0, w, h);
+
+    let dataURL;
+    try {
+      dataURL = canvas.toDataURL('image/png');
+    } catch (e) {
+      warnEl.innerHTML = '⚠ Canvas export failed: ' + e.message + '. Try a smaller image.';
+      announce('Error: canvas export failed.');
+      return;
+    }
+
+    // Step 4: size feedback based on output (not input) size
+    const outputBytes = Math.ceil((dataURL.length - dataURL.indexOf(',') - 1) * 0.75);
+    if (outputBytes > 3 * 1024 * 1024) {
+      warnEl.style.display = 'block';
+      warnEl.innerHTML = '⚠ Encoded image is large (' + formatBytes(outputBytes) + '). ' +
+        'Clipboard copy may fail — use the Download PNG option.';
+    } else if (outputBytes > 500 * 1024) {
+      warnEl.style.display = 'block';
+      warnEl.innerHTML = 'ℹ Encoded size: ~' + formatBytes(outputBytes) + '. Both save options will work fine.';
+    } else {
+      warnEl.style.display = 'none';
+    }
+
+    // Step 5: store and update UI
+    state.encoded = dataURL;
+
+    const previewImg = document.getElementById('previewImg');
+    previewImg.src = dataURL;
+    previewImg.alt = 'Preview of ' + file.name;
     document.getElementById('imgName').textContent = file.name;
-    document.getElementById('imgSize').textContent = formatBytes(file.size);
+    document.getElementById('imgSize').textContent =
+      formatBytes(file.size) + ' → ' + formatBytes(outputBytes) + ' (normalized PNG)';
     document.getElementById('imgStrip').style.display = 'block';
 
     document.getElementById('saveSection').style.display = 'block';
@@ -89,25 +153,26 @@ function handleFile(file) {
     document.getElementById('copyCard').classList.remove('done');
     document.getElementById('pngCard').classList.remove('done');
 
-    // Hide the download panel and floating button until PNG is built
     document.getElementById('pngDownloadPanel').style.display = 'none';
     document.getElementById('floatingDownload').style.display = 'none';
 
     if (state.pngBlobURL) { URL.revokeObjectURL(state.pngBlobURL); state.pngBlobURL = ''; }
+    state.pngBlob = null;
 
     updateAdv();
     setStep(2);
-    announce('Image encoded: ' + file.name + ', ' + formatBytes(file.size) + '. Choose how to save it.');
+    announce('Image encoded: ' + file.name + ', ' + w + '×' + h + 'px PNG. Choose how to save it.');
     setTimeout(() => document.getElementById('saveSection')
       .scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 200);
   };
-  reader.readAsDataURL(file);
+
+  tempImg.src = blobURL;
 }
 
 // ── Copy to clipboard ─────────────────────────────────────────────────────────
 function doCopy(card) {
   if (!state.encoded) return;
-  const badge   = document.getElementById('copyBadge');
+  const badge = document.getElementById('copyBadge');
   const alertEl = document.getElementById('copyAlert');
 
   const ok = () => {
@@ -178,13 +243,13 @@ function doSavePNG(card) {
  * This completely eliminates the "Canvas rendering failed" error.
  */
 function buildStringPNG(text) {
-  const pngBytes   = makeMinimalPNG();
-  const final      = appendPayloadToPNG(pngBytes, text);
-  const blob       = new Blob([final], { type: 'image/png' });
+  const pngBytes = makeMinimalPNG();
+  const final = appendPayloadToPNG(pngBytes, text);
+  const blob = new Blob([final], { type: 'image/png' });
   // Store the raw Blob — downloadStringImage creates a fresh URL each time
   // so it can never be stale/revoked by the time the user clicks.
   if (state.pngBlobURL) URL.revokeObjectURL(state.pngBlobURL);
-  state.pngBlob    = blob;
+  state.pngBlob = blob;
   state.pngBlobURL = URL.createObjectURL(blob); // kept for compat only
 }
 
@@ -195,16 +260,16 @@ function buildStringPNG(text) {
  */
 function makeMinimalPNG() {
   // ── PNG signature ──────────────────────────────────────────────────────────
-  const sig = new Uint8Array([137,80,78,71,13,10,26,10]);
+  const sig = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
 
   // ── IHDR — 8×8, 8-bit RGB ─────────────────────────────────────────────────
   const ihdrData = new Uint8Array(13);
   // width = 8
-  ihdrData[0]=0; ihdrData[1]=0; ihdrData[2]=0; ihdrData[3]=8;
+  ihdrData[0] = 0; ihdrData[1] = 0; ihdrData[2] = 0; ihdrData[3] = 8;
   // height = 8
-  ihdrData[4]=0; ihdrData[5]=0; ihdrData[6]=0; ihdrData[7]=8;
-  ihdrData[8]  = 8;  // bit depth
-  ihdrData[9]  = 2;  // colour type: RGB
+  ihdrData[4] = 0; ihdrData[5] = 0; ihdrData[6] = 0; ihdrData[7] = 8;
+  ihdrData[8] = 8;  // bit depth
+  ihdrData[9] = 2;  // colour type: RGB
   ihdrData[10] = 0;  // compression
   ihdrData[11] = 0;  // filter
   ihdrData[12] = 0;  // interlace
@@ -218,7 +283,7 @@ function makeMinimalPNG() {
     const base = r * ROW;
     raw[base] = 0; // filter type None
     for (let p = 0; p < 8; p++) {
-      raw[base + 1 + p * 3]     = 0x0a; // R
+      raw[base + 1 + p * 3] = 0x0a; // R
       raw[base + 1 + p * 3 + 1] = 0x0a; // G
       raw[base + 1 + p * 3 + 2] = 0x0f; // B
     }
@@ -231,8 +296,8 @@ function makeMinimalPNG() {
 
   // ── Concatenate all chunks ─────────────────────────────────────────────────
   const total = sig.length + ihdr.length + idat.length + iend.length;
-  const out   = new Uint8Array(total);
-  let   pos   = 0;
+  const out = new Uint8Array(total);
+  let pos = 0;
   for (const part of [sig, ihdr, idat, iend]) {
     out.set(part, pos);
     pos += part.length;
@@ -265,33 +330,33 @@ function deflateRaw(data) {
 
   let offset = 0;
   for (let b = 0; b < blocks; b++) {
-    const end   = Math.min(offset + BLOCK, data.length);
-    const len   = end - offset;
-    const last  = (b === blocks - 1) ? 1 : 0;
-    const nlen  = (~len) & 0xffff;
+    const end = Math.min(offset + BLOCK, data.length);
+    const len = end - offset;
+    const last = (b === blocks - 1) ? 1 : 0;
+    const nlen = (~len) & 0xffff;
 
     out[pos++] = last;           // BFINAL | (BTYPE=00 << 1)
-    out[pos++] =  len        & 0xff;
-    out[pos++] = (len >> 8)  & 0xff;
-    out[pos++] =  nlen       & 0xff;
+    out[pos++] = len & 0xff;
+    out[pos++] = (len >> 8) & 0xff;
+    out[pos++] = nlen & 0xff;
     out[pos++] = (nlen >> 8) & 0xff;
 
     out.set(data.subarray(offset, end), pos);
-    pos    += len;
-    offset  = end;
+    pos += len;
+    offset = end;
   }
 
   // Adler-32 checksum of original data
   let s1 = 1, s2 = 0;
   for (let i = 0; i < data.length; i++) {
     s1 = (s1 + data[i]) % 65521;
-    s2 = (s2 + s1)      % 65521;
+    s2 = (s2 + s1) % 65521;
   }
   const adler = (s2 << 16) | s1;
   out[pos++] = (adler >> 24) & 0xff;
   out[pos++] = (adler >> 16) & 0xff;
-  out[pos++] = (adler >>  8) & 0xff;
-  out[pos++] =  adler        & 0xff;
+  out[pos++] = (adler >> 8) & 0xff;
+  out[pos++] = adler & 0xff;
 
   return out.subarray(0, pos);
 }
@@ -326,8 +391,8 @@ function downloadStringImage() {
 
   // Create a fresh URL each time — the stored one may have been revoked
   const url = URL.createObjectURL(state.pngBlob);
-  const a   = document.createElement('a');
-  a.href     = url;
+  const a = document.createElement('a');
+  a.href = url;
   a.download = 'base64-string.png';
   document.body.appendChild(a);
   a.click();
@@ -353,7 +418,7 @@ function clearAll() {
   state.encoded = '';
 
   document.getElementById('fileInput').value = '';
-  document.getElementById('urlInput').value  = '';
+  document.getElementById('urlInput').value = '';
   ['imgStrip', 'saveSection', 'sizeWarn', 'urlErr', 'copyAlert', 'pngDownloadPanel']
     .forEach(id => { document.getElementById(id).style.display = 'none'; });
   document.getElementById('floatingDownload').style.display = 'none';
@@ -387,7 +452,7 @@ function detectMime(b64) {
     if (b[0] === 0x89 && b[1] === 0x50) return 'image/png';
     if (b[0] === 0x47 && b[1] === 0x49) return 'image/gif';
     if (b[0] === 0x52 && b[1] === 0x49) return 'image/webp';
-    if (b[0] === 0x3C)                  return 'image/svg+xml';
+    if (b[0] === 0x3C) return 'image/svg+xml';
   } catch (e) { /* fall through */ }
   return 'image/jpeg';
 }
