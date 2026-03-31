@@ -4,5 +4,8 @@
     "description": "Base64 Image Codec with HEIC support",
     "dependencies": {
         "sharp": "^0.33.3"
+    },
+    "optionalDependencies": {
+        "@img/sharp-linux-x64": "^0.33.3"
     }
 }
