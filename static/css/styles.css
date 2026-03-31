@@ -1217,3 +1217,25 @@ h1 {
   background: rgba(124, 106, 255, .35);
   color: #fff;
 }
+
+/* ── SPA Views ─────────────────────────────────────────────────────────────── */
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

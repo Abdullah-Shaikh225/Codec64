@@ -3,9 +3,9 @@
  */
 
 const state = {
-  encoded:     '',
-  pngBlobURL:  '',
-  pngBlob:     null,   // FIX: stores raw Blob so downloadStringImage always creates a fresh URL
+  encoded: '',
+  pngBlobURL: '',
+  pngBlob: null,   // FIX: stores raw Blob so downloadStringImage always creates a fresh URL
   currentSnip: 'html'
 };
 
@@ -19,7 +19,7 @@ function setStep(n) {
   const labels = ['Upload', 'Save', 'Restore'];
 
   for (let i = 1; i <= 3; i++) {
-    const num  = document.getElementById('sn' + i);
+    const num = document.getElementById('sn' + i);
     const line = document.getElementById('sl' + i);
 
     if (i < n) {
@@ -48,10 +48,10 @@ function setStep(n) {
 }
 
 function toggleAdv() {
-  const panel  = document.getElementById('advPanel');
-  const arr    = document.getElementById('advArr');
+  const panel = document.getElementById('advPanel');
+  const arr = document.getElementById('advArr');
   const toggle = document.getElementById('advToggle');
-  const open   = panel.classList.toggle('open');
+  const open = panel.classList.toggle('open');
   arr.classList.toggle('open', open);
   toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
   announce(open ? 'Advanced tools expanded.' : 'Advanced tools collapsed.');
@@ -59,8 +59,8 @@ function toggleAdv() {
 
 const SNIPS = {
   html: d => `<img src="${d}" alt="image" />`,
-  css:  d => `.element {\n  background-image: url('${d}');\n  background-size: cover;\n}`,
-  md:   d => `![image](${d})`,
+  css: d => `.element {\n  background-image: url('${d}');\n  background-size: cover;\n}`,
+  md: d => `![image](${d})`,
   json: d => `{\n  "image": "${d}"\n}`
 };
 
@@ -92,7 +92,7 @@ function copyRaw() {
 
 function updateAdv() {
   if (!state.encoded) {
-    document.getElementById('rawPreview').textContent  = 'Upload an image to see the raw string.';
+    document.getElementById('rawPreview').textContent = 'Upload an image to see the raw string.';
     document.getElementById('snipContent').textContent = 'Upload an image above to generate snippets.';
     ['stChars', 'stSize', 'stFmt', 'stOh'].forEach(id => {
       document.getElementById(id).textContent = '—';
@@ -105,16 +105,16 @@ function updateAdv() {
   document.getElementById('snipContent').textContent =
     SNIPS[state.currentSnip](state.encoded);
 
-  const m         = state.encoded.match(/^data:([^;,]+)/);
-  const fmt       = m ? m[1].replace('image/', '').toUpperCase() : '?';
-  const b64len    = state.encoded.length - state.encoded.indexOf(',') - 1;
+  const m = state.encoded.match(/^data:([^;,]+)/);
+  const fmt = m ? m[1].replace('image/', '').toUpperCase() : '?';
+  const b64len = state.encoded.length - state.encoded.indexOf(',') - 1;
   const origBytes = Math.ceil(b64len * 0.75);
-  const overhead  = (((state.encoded.length / origBytes) - 1) * 100).toFixed(0);
+  const overhead = (((state.encoded.length / origBytes) - 1) * 100).toFixed(0);
 
   document.getElementById('stChars').textContent = state.encoded.length.toLocaleString();
-  document.getElementById('stSize').textContent  = formatBytes(origBytes);
-  document.getElementById('stFmt').textContent   = fmt;
-  document.getElementById('stOh').textContent    = '+' + overhead + '%';
+  document.getElementById('stSize').textContent = formatBytes(origBytes);
+  document.getElementById('stFmt').textContent = fmt;
+  document.getElementById('stOh').textContent = '+' + overhead + '%';
 }
 
 function flashPanel(flashId) {
@@ -125,17 +125,17 @@ function flashPanel(flashId) {
 
 document.addEventListener('DOMContentLoaded', () => {
   const dz = document.getElementById('dropZone');
-  dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('over'); });
-  dz.addEventListener('dragleave', ()  => dz.classList.remove('over'));
-  dz.addEventListener('drop',      e  => {
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+  dz.addEventListener('drop', e => {
     e.preventDefault(); dz.classList.remove('over');
     handleFile(e.dataTransfer.files[0]);
   });
 
   const dd = document.getElementById('decodeDrop');
-  dd.addEventListener('dragover',  e => { e.preventDefault(); dd.classList.add('over'); });
-  dd.addEventListener('dragleave', ()  => dd.classList.remove('over'));
-  dd.addEventListener('drop',      e  => {
+  dd.addEventListener('dragover', e => { e.preventDefault(); dd.classList.add('over'); });
+  dd.addEventListener('dragleave', () => dd.classList.remove('over'));
+  dd.addEventListener('drop', e => {
     e.preventDefault(); dd.classList.remove('over');
     handlePngUpload(e.dataTransfer.files[0]);
   });
@@ -258,7 +258,45 @@ function showToast(msg, isError = false) {
 }
 
 function formatBytes(n) {
-  if (n < 1024)    return n + ' B';
+  if (n < 1024) return n + ' B';
   if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
   return (n / 1048576).toFixed(2) + ' MB';
 }
+
+function showView(viewId) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const target = document.getElementById(viewId);
+  if (target) target.classList.add('active');
+
+  const homeBtn = document.getElementById('homeBtn');
+  const mainTagline = document.getElementById('mainTagline');
+
+  if (viewId === 'onboardingView') {
+    if (homeBtn) homeBtn.style.display = 'none';
+    if (mainTagline) mainTagline.style.display = 'block';
+
+    // Clear hash
+    if (window.history.replaceState) {
+      window.history.replaceState(null, null, window.location.pathname);
+    }
+  } else {
+    if (homeBtn) homeBtn.style.display = 'block';
+    if (mainTagline) mainTagline.style.display = 'none';
+
+    // Update hash for basic state reflection (optional but nice)
+    window.location.hash = viewId;
+  }
+}
+
+// Handle browser back button basic support
+function handleHash() {
+  const hash = window.location.hash.substring(1);
+  if (hash && document.getElementById(hash)) {
+    showView(hash);
+  } else {
+    showView('onboardingView');
+  }
+}
+
+window.addEventListener('hashchange', handleHash);
+window.addEventListener('DOMContentLoaded', handleHash);
