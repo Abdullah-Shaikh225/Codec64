@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Base64 Image Codec</title>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-M991NFRCWE"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'G-M991NFRCWE');
+  </script>
+  <!-- Fonts -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="static/css/styles.css">
+
+  <!-- FIX: libheif-js removed — it was loaded (~3 MB WASM) but never used.
+       All HEIC conversion goes to /api/convert-heic (server-side). -->
+</head>
+
+<body>
+
+  <div class="orb orb-a" aria-hidden="true"></div>
+  <div class="orb orb-b" aria-hidden="true"></div>
+  <div class="orb orb-c" aria-hidden="true"></div>
+
+  <div id="liveRegion" role="status" aria-live="polite" aria-atomic="true" style="position:absolute;width:1px;height:1px;overflow:hidden;
+           clip:rect(0,0,0,0);white-space:nowrap;"></div>
+
+
+
+  <div class="wrap">
+
+    <header style="position:relative;margin-bottom:10px;">
+      <button id="homeBtn" class="btn btn-ghost btn-sm" style="display:none;position:absolute;left:0;top:-5px;"
+        onclick="showView('onboardingView')" aria-label="Back to Home">
+        🔙 Home
+      </button>
+      <div id="mainTagline" style="display:none;"></div>
+    </header>
+
+    <!-- ══════════ ONBOARDING VIEW ═══════════════════════════════════════════ -->
+    <div id="onboardingView" class="view active">
+      <style>
+        .onboard-wrap {
+          width: 95vw;
+          max-width: 1040px;
+          margin-left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+        }
+
+        .onboard-title {
+          font-family: 'Syne', sans-serif;
+          font-size: clamp(2rem, 4vw, 3rem);
+          font-weight: 800;
+          text-align: center;
+          margin: 60px 0 50px 0;
+          letter-spacing: -0.02em;
+          background: linear-gradient(135deg, #6affdb, #a08fff, #fff);
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+
+        .onboard-cards {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 24px;
+          width: 100%;
+        }
+
+        @media (max-width: 850px) {
+          .onboard-cards {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        .onboard-card {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 20px;
+          padding: 40px 24px;
+          text-align: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          position: relative;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .onboard-card:hover {
+          transform: translateY(-5px);
+          background: rgba(255, 255, 255, 0.05);
+          border-color: rgba(106, 255, 219, 0.4);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 15px 40px rgba(106, 255, 219, 0.15);
+        }
+
+        /* Specific glow for middle card like screenshot */
+        .onboard-card.active-glow {
+          border-color: rgba(106, 255, 219, 0.3);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 20px rgba(106, 255, 219, 0.1), 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .onboard-card.active-glow:hover {
+          border-color: rgba(106, 255, 219, 0.7);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 40px rgba(106, 255, 219, 0.25), 0 15px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .icon-orb {
+          width: 84px;
+          height: 84px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(106, 255, 219, 0.6) 0%, rgba(160, 143, 255, 0.3) 40%, transparent 70%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 24px;
+          position: relative;
+        }
+
+        .icon-orb::before {
+          content: '';
+          position: absolute;
+          inset: 12px;
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 50%;
+          backdrop-filter: blur(8px);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .icon-orb svg {
+          width: 38px;
+          height: 38px;
+          position: relative;
+          z-index: 1;
+        }
+
+        .card-title {
+          font-family: 'Syne', sans-serif;
+          font-weight: 700;
+          font-size: 1.25rem;
+          color: #fff;
+          margin-bottom: 12px;
+          line-height: 1.3;
+        }
+
+        .card-desc {
+          font-size: 0.9rem;
+          color: rgba(255, 255, 255, 0.55);
+          line-height: 1.5;
+        }
+      </style>
+
+      <div class="onboard-wrap">
+        <a href="index.html" class="btn btn-ghost"
+          style="position:absolute; top:20px; left:0; text-decoration:none; display:flex; align-items:center; gap:6px; font-weight:600; padding:8px 16px; border-radius:10px;">
+          <span aria-hidden="true" style="font-size:1.1rem; line-height:1;"></span> 🔙 Home
+        </a>
+        <h2 class="onboard-title">What do you want to do?</h2>
+
+        <div class="onboard-cards">
+
+          <div class="onboard-card" onclick="showView('encodeView')" role="button" tabindex="0"
+            onkeydown="if(event.key==='Enter'||event.key===' ')showView('encodeView')">
+            <div class="icon-orb">
+              <svg viewBox="0 0 24 24">
+                <path d="M6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" fill="rgba(255,255,255,0.6)" />
+                <path
+                  d="M18 15h-.5v-1.5a2.5 2.5 0 0 0-5 0V15h-.5c-.55 0-1 .45-1 1v5c0 .55.45 1 1 1h7c.55 0 1-.45 1-1v-5c0-.55-.45-1-1-1zm-3-1.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5V15h-3v-1.5z"
+                  fill="#fff" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.5))" />
+              </svg>
+            </div>
+            <div class="card-title">Encode Image to<br>Private Image</div>
+            <div class="card-desc">Upload an image and convert it into a portable text string or hidden inside a PNG.
+            </div>
+          </div>
+
+          <div class="onboard-card active-glow" onclick="showView('decodeView')" role="button" tabindex="0"
+            onkeydown="if(event.key==='Enter'||event.key===' ')showView('decodeView')">
+            <div class="icon-orb">
+              <svg viewBox="0 0 24 24">
+                <path d="M6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" fill="rgba(255,255,255,0.6)" />
+                <path
+                  d="M19.5 20.5l-3.2-3.2c.4-.6.7-1.4.7-2.3 0-2.2-1.8-4-4-4s-4 1.8-4 4 1.8 4 4 4c.9 0 1.7-.3 2.3-.7l3.2 3.2 1-1zM13 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"
+                  fill="#fff" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.5))" />
+              </svg>
+            </div>
+            <div class="card-title">Restore Image from<br>Private Image</div>
+            <div class="card-desc">Paste a Base64 string or upload an encoded PNG file to get your original image back
+              instantly.</div>
+          </div>
+
+          <div class="onboard-card" onclick="showView('convertView')" role="button" tabindex="0"
+            onkeydown="if(event.key==='Enter'||event.key===' ')showView('convertView')">
+            <div class="icon-orb">
+              <svg viewBox="0 0 24 24">
+                <path d="M6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" fill="rgba(255,255,255,0.6)" />
+                <path
+                  d="M12 11c-2.2 0-4 1.8-4 4s1.8 4 4 4c1.8 0 3.3-1.2 3.8-2.8l-1.4-.5c-.3 1.1-1.3 1.8-2.4 1.8-1.4 0-2.5-1.1-2.5-2.5s1.1-2.5 2.5-2.5v1.5l2-2-2-2V11zm6 4c0-.3 0-.7-.1-1l-1.4.5c.1.3.1.5.1.8 0 1.4-1.1 2.5-2.5 2.5V16l-2 2 2 2v-1.5c2.2 0 4-1.8 4-4z"
+                  fill="#fff" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.5))" />
+              </svg>
+            </div>
+            <div class="card-title">Convert Image<br>Format</div>
+            <div class="card-desc">Convert any image (including HEIC) to JPEG, PNG, or WEBP easily.</div>
+          </div>
+
+        </div>
+
+        <footer
+          style="margin-top:70px; margin-bottom:50px; text-align:center;font-family:var(--mono);font-size:11px; color:var(--muted2);opacity:.7;transition:opacity .3s;"
+          onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">
+          Project made by <strong style="color:var(--text);font-weight:700;">Abdullah Shaikh</strong>
+          <div style="margin-top:12px;display:flex;gap:12px;justify-content:center;align-items:center;">
+            <a href="mailto:abdullahictmail@gmail.com"
+              style="color:var(--muted2);text-decoration:none;display:flex;align-items:center; gap:4px;transition:color .2s;"
+              onmouseover="this.style.color='var(--teal)'" onmouseout="this.style.color='var(--muted2)'">
+              <span aria-hidden="true" style="font-size:13px;">✉</span> abdullahictmail@gmail.com
+            </a>
+            <span style="color:var(--border2);">|</span>
+            <a href="#"
+              style="color:var(--muted2);text-decoration:none;display:flex;align-items:center; gap:4px;transition:color .2s;"
+              onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted2)'">
+              <span aria-hidden="true" style="font-size:13px;">🌐</span> Portfolio
+            </a>
+          </div>
+        </footer>
+
+      </div> <!-- onboard-wrap -->
+    </div>
+
+    <!-- ══════════ HOW IT WORKS VIEW ══════════════════════════════════════════ -->
+    <div id="howItWorksView" class="view">
+      <style>
+        .guide-grid {
+          display: flex;
+          gap: 24px;
+          overflow-x: auto;
+          overflow-y: hidden;
+          padding-bottom: 24px;
+          scroll-snap-type: x mandatory;
+          -webkit-overflow-scrolling: touch;
+          width: 100%;
+          margin-bottom: 40px;
+          -ms-overflow-style: none;
+          /* IE and Edge */
+          scrollbar-width: none;
+          /* Firefox */
+        }
+
+        .guide-grid::-webkit-scrollbar {
+          display: none;
+          /* Chrome, Safari and Opera */
+        }
+
+        .guide-section {
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid var(--border);
+          border-radius: 16px;
+          padding: 24px;
+          margin-bottom: 0;
+          backdrop-filter: blur(10px);
+          display: flex;
+          flex-direction: column;
+          min-width: 320px;
+          max-width: 380px;
+          flex: 0 0 auto;
+          scroll-snap-align: center;
+        }
+
+        @media (min-width: 800px) {
+          .guide-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            overflow-x: visible;
+            overflow-y: visible;
+            padding-bottom: 0;
+            scroll-snap-type: none;
+          }
+
+          .guide-section {
+            min-width: 0;
+            max-width: none;
+            flex: auto;
+            scroll-snap-align: none;
+          }
+
+          .guide-section:nth-last-child(-n+2) {
+            grid-column: 1 / -1;
+          }
+        }
+
+        .guide-step {
+          display: flex;
+          gap: 16px;
+          align-items: flex-start;
+          margin-bottom: 20px;
+        }
+
+        .guide-step-number {
+          background: var(--teal);
+          color: #000;
+          padding: 6px 12px;
+          border-radius: 8px;
+          font-weight: bold;
+          font-family: var(--mono);
+        }
+
+        .guide-faq details {
+          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          margin-bottom: 12px;
+          overflow: hidden;
+        }
+
+        .guide-faq summary {
+          padding: 16px 20px;
+          font-family: var(--sans);
+          font-weight: 700;
+          color: var(--text);
+          cursor: pointer;
+          list-style: none;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .guide-faq summary::-webkit-details-marker {
+          display: none;
+        }
+
+        .guide-faq summary::after {
+          content: '▼';
+          font-size: 10px;
+          color: var(--muted2);
+        }
+
+        .guide-faq details[open] summary::after {
+          transform: rotate(180deg);
+        }
+
+        .guide-faq p {
+          padding: 0 20px 20px 20px;
+          color: var(--muted);
+          margin: 0;
+        }
+
+        .cta-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(135deg, var(--accent), #a08fff);
+          color: #fff;
+          text-decoration: none;
+          padding: 14px 28px;
+          border-radius: 12px;
+          font-weight: 700;
+          font-family: var(--sans);
+          font-size: 1.1rem;
+          box-shadow: 0 4px 18px var(--accent-glow);
+          transition: all 0.2s ease;
+          border: none;
+          cursor: pointer;
+        }
+
+        .cta-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px var(--accent-glow);
+        }
+      </style>
+
+      <div class="content-article"
+        style="font-family:var(--sans); line-height:1.8; color:var(--text); font-size:1.05rem; margin-top: 30px;">
+
+        <div style="text-align:center; margin-bottom:40px;">
+          <h1
+            style="color:var(--text); font-size: clamp(2.2rem, 5vw, 3rem); font-weight:800; line-height:1.2; margin-bottom:15px; background:linear-gradient(135deg, #fff, var(--accent), var(--teal)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;">
+            Codec64 Guide</h1>
+          <p style="color:var(--muted); font-size:1.15rem; max-width:600px; margin:0 auto 25px auto;">
+            A free online tool that lets you securely encode, restore, and convert images locally inside your browser.
+          </p>
+          <button class="cta-btn" onclick="window.location.href='app.html'">Try Codec64 Now ➔</button>
+        </div>
+
+        <div class="guide-grid">
+
+          <div class="guide-section">
+            <h2 style="color:var(--accent); font-size:1.5rem; margin-bottom:15px;">❓ What is Codec64?</h2>
+            <p style="margin-bottom:15px;">Codec64 is an image encoder and decoder that allows you to:</p>
+            <ul style="margin-bottom:15px; color:var(--muted); padding-left:20px; list-style-type:square;">
+              <li style="margin-bottom:8px;">Convert image to Base64 (internally, without showing complexity)</li>
+              <li style="margin-bottom:8px;">Turn images into private downloadable files</li>
+              <li style="margin-bottom:8px;">Secure images with password protection</li>
+              <li style="margin-bottom:8px;">Restore images instantly</li>
+              <li style="margin-bottom:0;">Convert images between formats</li>
+            </ul>
+            <p style="color:var(--teal); margin-bottom:0; font-weight:600;">It works completely online without requiring
+              any login.</p>
+          </div>
+
+          <div class="guide-section">
+            <h2 style="color:var(--accent); font-size:1.5rem; margin-bottom:15px;">🖼️ How to Encode an Image Online
+            </h2>
+            <p style="margin-bottom:25px;">Encoding an image means turning it into a portable and private format that
+              can
+              be stored or shared easily.</p>
+
+            <div class="guide-step">
+              <div class="guide-step-number">1</div>
+              <div>
+                <h3 style="color:var(--text); font-size:1.1rem; margin-bottom:4px;">Upload your image</h3>
+                <p style="color:var(--muted); margin:0; font-size:0.95rem;">Choose any image from your device.</p>
+              </div>
+            </div>
+
+            <div class="guide-step">
+              <div class="guide-step-number">2</div>
+              <div>
+                <h3 style="color:var(--text); font-size:1.1rem; margin-bottom:4px;">Add details (optional)</h3>
+                <p style="color:var(--muted); margin:0; font-size:0.95rem;">Add a note for identification or a password
+                  for high-grade security.</p>
+              </div>
+            </div>
+
+            <div class="guide-step" style="margin-bottom:0;">
+              <div class="guide-step-number">3</div>
+              <div>
+                <h3 style="color:var(--text); font-size:1.1rem; margin-bottom:4px;">Generate private image</h3>
+                <p style="color:var(--muted); margin:0; font-size:0.95rem;">Download the encoded image file. This acts
+                  as
+                  a secure container.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="guide-section">
+            <h2 style="color:var(--accent); font-size:1.5rem; margin-bottom:15px;">🔄 How to Decode and Restore Image
+            </h2>
+            <p style="margin-bottom:25px;">To restore your image:</p>
+
+            <div class="guide-step">
+              <div class="guide-step-number">1</div>
+              <div>
+                <h3 style="color:var(--text); font-size:1.1rem; margin-bottom:4px;">Upload the encoded image</h3>
+                <p style="color:var(--muted); margin:0; font-size:0.95rem;">Upload the PNG image payload you previously
+                  generated.</p>
+              </div>
+            </div>
+
+            <div class="guide-step" style="margin-bottom:0;">
+              <div class="guide-step-number">2</div>
+              <div>
+                <h3 style="color:var(--text); font-size:1.1rem; margin-bottom:4px;">Enter password &amp; recover</h3>
+                <p style="color:var(--muted); margin:0; font-size:0.95rem;">Input your password (if used) and instantly
+                  recover the original picture.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="guide-section">
+            <h2 style="color:var(--accent); font-size:1.5rem; margin-bottom:15px;">🔒 Secure Image Sharing</h2>
+            <p style="margin-bottom:15px;">Codec64 allows secure image sharing without uploading your data anywhere.</p>
+            <ul style="margin-bottom:0; color:var(--muted); padding-left:20px;">
+              <li style="margin-bottom:8px;">Share encoded image files safely</li>
+              <li style="margin-bottom:8px;">Add password protection for extra security</li>
+              <li style="margin-bottom:0;">Only authorized users can restore the image</li>
+            </ul>
+          </div>
+
+          <div class="guide-section">
+            <h2 style="color:var(--accent); font-size:1.5rem; margin-bottom:15px;">⚡ Image to Base64 Converter</h2>
+            <p style="margin-bottom:15px;">Internally, the app converts your image into a format similar to Base64,
+              allowing it to be stored and restored perfectly.</p>
+            <p style="color:var(--teal); margin-bottom:0;">You don’t need to understand technical details — everything
+              works automatically.</p>
+          </div>
+
+          <div class="guide-section">
+            <h2 style="color:var(--accent); font-size:1.5rem; margin-bottom:15px;">🔁 Convert Image Format Online</h2>
+            <p style="margin-bottom:15px;">You can also use Codec64 as an image converter:</p>
+            <ul style="margin-bottom:15px; color:var(--muted); padding-left:20px; list-style-type:circle;">
+              <li style="margin-bottom:8px;">Convert image to PNG</li>
+              <li style="margin-bottom:8px;">Convert image to JPEG</li>
+              <li style="margin-bottom:8px;">Convert image to WEBP</li>
+            </ul>
+            <p style="margin-bottom:0; color:var(--teal);">This works instantly in your browser.</p>
+          </div>
+
+          <div class="guide-section"
+            style="border-color: rgba(106, 255, 219, .2); background: rgba(106, 255, 219, .03);">
+            <h2 style="color:var(--teal); font-size:1.5rem; margin-bottom:15px;">🛡️ Your Privacy Matters</h2>
+            <p style="margin-bottom:15px;">Codec64 is designed as a privacy-first image tool.</p>
+            <ul style="margin-bottom:15px; color:var(--muted); padding-left:20px;">
+              <li style="margin-bottom:8px;"><strong>No image uploads to servers</strong></li>
+              <li style="margin-bottom:8px;">No tracking of your files</li>
+              <li style="margin-bottom:8px;">No storage of your data</li>
+              <li style="margin-bottom:0;">Everything runs locally in your browser</li>
+            </ul>
+            <p style="color:var(--teal); margin-bottom:0; font-weight:600;">Your images remain completely under your
+              control.</p>
+          </div>
+
+          <div class="guide-section"
+            style="border-color: rgba(255, 184, 106, .2); background: rgba(255, 184, 106, .03);">
+            <h2 style="color:var(--amber); font-size:1.5rem; margin-bottom:15px;">⚠️ Why Does the Encoded Image Look
+              Different?</h2>
+            <p style="margin-bottom:10px;">The encoded image may look blank or dark because it stores hidden data
+              instead
+              of a visible picture.</p>
+            <p style="margin-bottom:0; color:var(--muted);">This is expected and ensures your image is stored securely.
+            </p>
+          </div>
+
+          <div class="guide-section">
+            <h2 style="color:var(--accent); font-size:1.7rem; margin-bottom:20px; text-align:center;">Frequently Asked
+              Questions</h2>
+            <div class="guide-faq">
+              <details>
+                <summary>Is this a free image encoder and decoder?</summary>
+                <p>Yes, Codec64 is completely free to use.</p>
+              </details>
+              <details>
+                <summary>Can I encode images online without uploading?</summary>
+                <p>Yes, everything happens in your browser.</p>
+              </details>
+              <details>
+                <summary>Is there any loss in quality?</summary>
+                <p>No, your original image is restored exactly.</p>
+              </details>
+              <details>
+                <summary>Can I share encoded images?</summary>
+                <p>Yes, you can share them like normal files.</p>
+              </details>
+              <details>
+                <summary>What if I forget my password?</summary>
+                <p style="color:var(--red); font-weight:700;">The image cannot be recovered.</p>
+              </details>
+            </div>
+          </div>
+
+          <div class="guide-section"
+            style="border-color:var(--accent); text-align:center; display:flex; justify-content:center; align-items:center;">
+            <div>
+              <h2 style="color:var(--text); font-size:1.4rem; margin-bottom:15px;">Ready to secure your images?</h2>
+              <p style="color:var(--muted); margin-bottom:20px;">If you're looking for a fast, secure, and private
+                online
+                solution to manage your images seamlessly, Codec64 has you completely covered.</p>
+              <button class="cta-btn" style="width:100%; max-width:300px;" onclick="window.location.href='app.html'">Try
+                Codec64 Now
+                ➔</button>
+            </div>
+          </div>
+
+        </div><!-- /guide-grid -->
+      </div>
+
+      <footer style="margin-top:48px;text-align:center;font-family:var(--mono);font-size:11px;
+               color:var(--muted2);opacity:.7;transition:opacity .3s;" onmouseover="this.style.opacity='1'"
+        onmouseout="this.style.opacity='0.7'">
+        Project made by <strong style="color:var(--text);font-weight:700;">Abdullah Shaikh</strong>
+        <div style="margin-top:8px;display:flex;gap:12px;justify-content:center;align-items:center;">
+          <a href="mailto:abdullahictmail@gmail.com" style="color:var(--muted2);text-decoration:none;display:flex;align-items:center;
+                   gap:4px;transition:color .2s;" onmouseover="this.style.color='var(--teal)'"
+            onmouseout="this.style.color='var(--muted2)'">
+            <span aria-hidden="true" style="font-size:13px;">✉</span> abdullahictmail@gmail.com
+          </a>
+          <span style="color:var(--border2);">|</span>
+          <a href="#" style="color:var(--muted2);text-decoration:none;display:flex;align-items:center;
+                   gap:4px;transition:color .2s;" onmouseover="this.style.color='var(--accent)'"
+            onmouseout="this.style.color='var(--muted2)'">
+            <span aria-hidden="true" style="font-size:13px;">🌐</span> Portfolio
+          </a>
+        </div>
+      </footer>
+    </div>
+
+    <!-- ══════════ ENCODE VIEW ════════════════════════════════════════════════ -->
+    <div id="encodeView" class="view">
+
+      <div id="encodePreSelect" class="action-section" style="margin-top:0;padding-top:20px;">
+        <h2 class="section-title">How do you want to encode the image?</h2>
+        <div class="action-cards" style="grid-template-columns:1fr 1fr;gap:16px;">
+
+          <div class="ac" onclick="startNormalEncode()" role="button" tabindex="0"
+            onkeydown="if(event.key==='Enter'||event.key===' ')startNormalEncode()">
+            <div class="ac-icon" aria-hidden="true">🔓</div>
+            <div class="ac-title" style="font-size:1.1rem;">Normal Image</div>
+            <div class="ac-desc" style="font-size:.85rem;">
+              Anyone with the encoded string or PNG can restore the image instantly.
+            </div>
+          </div>
+
+          <div class="ac" onclick="showPasswordInputForEncode()" role="button" tabindex="0"
+            onkeydown="if(event.key==='Enter'||event.key===' ')showPasswordInputForEncode()">
+            <div class="ac-icon" aria-hidden="true">🔒</div>
+            <div class="ac-title" style="font-size:1.1rem;">Password Protected</div>
+            <div class="ac-desc" style="font-size:.85rem;">
+              The image is encrypted. It can only be restored with the correct password.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div id="encodePasswordSetup" class="action-section"
+        style="display:none;margin-top:0;padding-top:20px;text-align:center;">
+        <h2 class="section-title">Set your password</h2>
+        <div style="max-width:400px;margin:0 auto;background:var(--surface2);padding:24px;
+                    border-radius:var(--radius);border:1px solid var(--border2);">
+          <div style="font-size:.9rem;color:var(--muted);margin-bottom:16px;">
+            ⚠️ If you forget this password, your encoded image cannot be recovered.
+          </div>
+          <input type="password" id="setupPasswordInput" class="url-inp password-inp"
+            style="width:100%;margin-bottom:16px;" placeholder="🔒 Enter a strong password">
+          <div class="alert alert-err" id="setupPasswordErr" role="alert" aria-live="assertive"
+            style="display:none;margin-bottom:16px;"></div>
+          <div class="row" style="justify-content:center;margin-top:0;">
+            <button class="btn btn-primary" onclick="submitPasswordForEncode()">Continue ➔</button>
+            <button class="btn btn-ghost" onclick="cancelEncodeSetup()">Back</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="encodeMainArea" style="display:none;">
+
+        <nav class="steps" id="stepIndicator" aria-label="Progress steps">
+          <div class="step-item">
+            <div class="step-num active" id="sn1" aria-current="step" aria-label="Step 1: Upload — current step">1</div>
+            <div class="step-label" aria-hidden="true">Upload</div>
+          </div>
+          <div class="step-line" id="sl1" aria-hidden="true"></div>
+          <div class="step-item">
+            <div class="step-num" id="sn2" aria-label="Step 2: Save — not yet reached">2</div>
+            <div class="step-label" aria-hidden="true">Save</div>
+          </div>
+          <div class="step-line" id="sl2" aria-hidden="true"></div>
+          <div class="step-item">
+            <div class="step-num" id="sn3" aria-label="Step 3: Restore — not yet reached">3</div>
+            <div class="step-label" aria-hidden="true">Restore</div>
+          </div>
+        </nav>
+
+        <div class="card" id="encodeCard">
+          <div class="card-shine" aria-hidden="true"></div>
+          <div class="card-body">
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+              <div class="slabel" aria-hidden="true" style="margin-bottom:0;">
+                Step 1 — Upload your image
+              </div>
+              <div id="encodeTypeBadge" class="instant-badge"
+                style="margin-top:0;padding:3px 10px;font-size:9px;cursor:pointer;" onclick="clearAll()"
+                title="Click to change encoding type">
+                🔒 Password Protected
+              </div>
+            </div>
+
+            <div class="drop-zone" id="dropZone" role="region"
+              aria-label="Image upload area — drag and drop or click to browse">
+              <input type="file" accept=".jpg,.jpeg,.png" id="fileInput" onchange="handleFile(this.files[0])"
+                aria-label="Choose an image file">
+              <div class="drop-icon" aria-hidden="true">🖼️</div>
+              <h3>Drop your image here</h3>
+              <p style="color:var(--teal);font-weight:600;letter-spacing:.5px;">
+                Please upload the image in JPG, JPEG, or PNG format
+              </p>
+            </div>
+
+            <div class="size-warn" id="sizeWarn" role="note"></div>
+
+            <div class="img-strip" id="imgStrip" aria-label="Image preview">
+              <img id="previewImg" src="" alt="Preview of selected image">
+              <div class="img-strip-foot">
+                <span id="imgName">—</span>
+                <span id="imgSize">—</span>
+              </div>
+            </div>
+
+            <input type="text" id="imageNote" class="url-inp" style="width:100%;margin-top:15px;"
+              placeholder="Add a note (optional)">
+
+            <div class="save-section" id="saveSection" aria-label="Save options">
+              <div class="big-save">
+                <div class="big-save-head">
+                  <div class="big-save-icon" aria-hidden="true">✅</div>
+                  <div>
+                    <div class="big-save-title">Image encoded — now save it</div>
+                    <div class="big-save-sub">
+                      Choose how you want to keep your image. You can always restore it later.
+                    </div>
+                  </div>
+                </div>
+
+                <div class="big-save-body">
+                  <p>Your image has been turned into a <strong>text string</strong>.
+                    Pick one or both ways to save it:</p>
+
+                  <div class="action-cards">
+                    <div class="ac ac-teal" onclick="doCopy(this)" id="copyCard" role="button" tabindex="0"
+                      aria-label="Copy encoded image to clipboard"
+                      onkeydown="if(event.key==='Enter'||event.key===' ')doCopy(this)">
+                      <div class="ac-icon" aria-hidden="true">📋</div>
+                      <div class="ac-title">Copy to Clipboard</div>
+                      <div class="ac-desc">
+                        Paste into Notes, WhatsApp, email — any app.
+                        Best for quick sharing right now.
+                      </div>
+                      <div class="ac-badge" id="copyBadge" aria-live="polite">Tap to copy</div>
+                    </div>
+
+                    <div class="ac ac-teal" onclick="doSavePNG(this)" id="pngCard" role="button" tabindex="0"
+                      aria-label="Build encoded PNG file for download"
+                      onkeydown="if(event.key==='Enter'||event.key===' ')doSavePNG(this)">
+                      <div class="ac-icon" aria-hidden="true">💾</div>
+                      <div class="ac-title">Download as File</div>
+                      <div class="ac-desc">
+                        Saves a PNG to your device. Upload it below later and your
+                        image comes back instantly.
+                      </div>
+                      <div class="ac-badge" id="pngBadge" aria-live="polite">Tap to build PNG</div>
+                    </div>
+                  </div>
+
+                  <div class="alert alert-ok" id="copyAlert" role="status" aria-live="polite">
+                    ✓ Copied to clipboard! Scroll down to the Restore section and paste it.
+                  </div>
+
+                  <div id="pngDownloadPanel" style="display:none;margin-top:18px;">
+                    <div class="big-save" style="border-color:rgba(106,255,219,.3);">
+                      <div class="big-save-head"
+                        style="background:linear-gradient(135deg,rgba(106,255,219,.1),rgba(124,106,255,.07));">
+                        <div class="big-save-icon" aria-hidden="true">📦</div>
+                        <div>
+                          <div class="big-save-title" style="color:var(--teal);">PNG is ready!</div>
+                          <div class="big-save-sub">
+                            Your image is hidden inside this file. Click the button below to save it.
+                          </div>
+                        </div>
+                      </div>
+                      <div class="big-save-body">
+                        <p>
+                          <strong>How to restore later:</strong> come back to this page and upload
+                          this PNG file — your original image will come back instantly.
+                        </p>
+                        <div class="row" style="margin-top:0;">
+                          <button class="btn btn-primary" onclick="downloadStringImage()"
+                            aria-label="Download the generated PNG file to your device">
+                            ⬇ Download PNG file
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              <div class="row" style="margin-top:14px;">
+                <button class="btn btn-ghost btn-sm" onclick="quickDecode()"
+                  aria-label="Test: immediately restore your image to verify the encoding">
+                  ⚡ Test — restore image now
+                </button>
+                <button class="btn btn-ghost btn-sm" onclick="clearAll()" aria-label="Start over with a new image">
+                  ✕ Start over
+                </button>
+              </div>
+
+            </div><!-- /save-section -->
+          </div><!-- /card-body -->
+        </div><!-- /encodeCard -->
+
+        <!-- Advanced panel -->
+        <div class="adv-toggle" id="advToggle" onclick="toggleAdv()" tabindex="0" role="button" aria-expanded="false"
+          aria-controls="advPanel" onkeydown="if(event.key==='Enter'||event.key===' ')toggleAdv()">
+          <div class="adv-left">
+            <div class="adv-icon" aria-hidden="true">⚙️</div>
+            <div>
+              <div class="adv-label">Advanced / Developer Tools</div>
+              <div class="adv-sub">Raw string · HTML img · CSS bg · Markdown · JSON · Stats</div>
+            </div>
+          </div>
+          <div class="adv-arr" id="advArr" aria-hidden="true">▼</div>
+        </div>
+
+        <div class="adv-panel" id="advPanel" role="region" aria-label="Advanced developer tools">
+          <div class="adv-inner">
+
+            <div class="slabel" style="margin-bottom:8px;" aria-hidden="true">Raw base64 string</div>
+            <div style="position:relative;">
+              <div class="raw-box" id="rawBox">
+                <span id="rawPreview">Upload an image to see the raw string.</span>
+                <div class="fade" aria-hidden="true"></div>
+              </div>
+              <div class="copy-flash" id="rawFlash" aria-hidden="true"></div>
+            </div>
+            <div class="row">
+              <button class="btn btn-teal btn-sm" onclick="copyRaw()" aria-label="Copy raw base64 string to clipboard">
+                📋 Copy raw string
+              </button>
+            </div>
+
+            <div style="margin-top:24px;">
+              <div class="slabel" style="margin-bottom:8px;" aria-hidden="true">
+                Code snippets — ready to paste into your project
+              </div>
+              <div class="snip-tabs" role="tablist" aria-label="Code snippet format">
+                <button class="snip-btn active" role="tab" aria-selected="true" aria-controls="snipPanel"
+                  onclick="setSnip('html',this)">HTML &lt;img&gt;</button>
+                <button class="snip-btn" role="tab" aria-selected="false" aria-controls="snipPanel"
+                  onclick="setSnip('css',this)">CSS bg</button>
+                <button class="snip-btn" role="tab" aria-selected="false" aria-controls="snipPanel"
+                  onclick="setSnip('md',this)">Markdown</button>
+                <button class="snip-btn" role="tab" aria-selected="false" aria-controls="snipPanel"
+                  onclick="setSnip('json',this)">JSON</button>
+              </div>
+              <div style="position:relative;">
+                <div class="snip-box" id="snipPanel" role="tabpanel">
+                  <span id="snipContent">Upload an image above to generate snippets.</span>
+                  <div class="fade" aria-hidden="true"></div>
+                </div>
+                <div class="copy-flash" id="snipFlash" aria-hidden="true"></div>
+              </div>
+              <div class="row">
+                <button class="btn btn-teal btn-sm" onclick="copySnip()"
+                  aria-label="Copy current code snippet to clipboard">
+                  📋 Copy snippet
+                </button>
+              </div>
+            </div>
+
+            <div style="margin-top:24px;">
+              <div class="slabel" style="margin-bottom:10px;" aria-hidden="true">Stats</div>
+              <div class="stat-row" aria-label="Encoding statistics">
+                <div class="stat">
+                  <div class="lbl">Characters</div>
+                  <div class="val" id="stChars">—</div>
+                </div>
+                <div class="stat">
+                  <div class="lbl">Encoded size</div>
+                  <div class="val" id="stSize">—</div>
+                </div>
+                <div class="stat">
+                  <div class="lbl">Format</div>
+                  <div class="val" id="stFmt">—</div>
+                </div>
+                <div class="stat">
+                  <div class="lbl">Overhead</div>
+                  <div class="val" id="stOh">—</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div><!-- /adv-panel -->
+
+      </div><!-- /encodeMainArea -->
+    </div><!-- /encodeView -->
+
+    <!-- ══════════ DECODE VIEW ════════════════════════════════════════════════ -->
+    <div id="decodeView" class="view">
+      <div class="card" id="decodeCard" style="margin-top:20px;">
+        <div class="card-shine" aria-hidden="true"></div>
+        <div class="card-body">
+
+          <div class="slabel" aria-hidden="true">
+            Upload the file you saved — your image will come back
+          </div>
+
+          <div class="decode-drop" id="decodeDrop" role="region"
+            aria-label="Restore area — upload the PNG file you saved to recover your image">
+            <input type="file" accept="image/png" id="pngInput" onchange="handlePngUpload(this.files[0])"
+              aria-label="Choose the saved PNG file to restore your image">
+            <div class="drop-icon" aria-hidden="true">📄</div>
+            <h3 id="dropTitle">Upload the saved PNG file</h3>
+            <p id="dropSub">The file downloaded from this tool — your image is hidden inside it</p>
+            <div class="instant-badge" aria-hidden="true">⚡ instant — no quality loss</div>
+          </div>
+
+          <div class="alert alert-ok" id="pngOk" role="status" aria-live="polite"></div>
+          <div class="alert alert-err" id="pngErr" role="alert" aria-live="assertive"></div>
+
+          <div class="decoded-result" id="decodedResult" aria-label="Restored image">
+            <div class="decoded-head">
+              <div class="dot dot-g" aria-hidden="true"></div>
+              Image restored successfully
+            </div>
+            <img id="decodedImg" src="" alt="Your restored image">
+            <div class="decoded-foot">
+              <span id="decodedMeta">—</span>
+              <button class="btn btn-ghost btn-sm" onclick="downloadDecoded()"
+                aria-label="Download the restored image to your device">
+                ⬇ Download Image
+              </button>
+            </div>
+          </div>
+
+          <div class="alert alert-err" id="decodeErr" role="alert" aria-live="assertive"></div>
+
+          <!-- FIX: id="pasteDetails" added so quickDecode() can target it by id -->
+          <details id="pasteDetails" style="margin-top:22px;">
+            <summary style="cursor:pointer;font-family:var(--mono);font-size:11px;
+                            color:var(--muted2);padding:8px 0;list-style:none;
+                            display:flex;align-items:center;gap:8px;outline:none;">
+              <span style="font-size:13px;transition:transform .2s;">▸</span>
+              &nbsp;I copied the string instead — paste it here to restore
+            </summary>
+            <label for="pasteArea" style="position:absolute;width:1px;height:1px;overflow:hidden;
+                          clip:rect(0,0,0,0);">
+              Paste your base64 encoded image string here
+            </label>
+            <textarea class="paste-area" id="pasteArea"
+              placeholder="Paste your base64 string here…&#10;&#10;Works with full data URLs (data:image/png;base64,…) or raw base64 text."
+              aria-describedby="decodeErr"></textarea>
+            <div class="row">
+              <button class="btn btn-primary" onclick="decodeFromPaste()"
+                aria-label="Restore image from pasted base64 string">
+                🔍 Restore image
+              </button>
+              <button class="btn btn-ghost btn-sm" onclick="clearDecode()" aria-label="Clear the pasted string">
+                ✕ Clear
+              </button>
+            </div>
+          </details>
+
+        </div>
+      </div>
+    </div><!-- /decodeView -->
+
+    <!-- ══════════ CONVERT VIEW ═══════════════════════════════════════════════ -->
+    <div id="convertView" class="view">
+      <div class="card" id="converterCard" style="margin-top:20px;">
+        <div class="card-shine" aria-hidden="true"></div>
+        <div class="card-body">
+
+          <div class="slabel" aria-hidden="true">Convert · Download · or send straight to Encoder</div>
+
+          <div class="alert alert-warn" id="convHint" style="display:none;margin-bottom:14px;" role="note"></div>
+
+          <div class="conv-drop" id="convDrop" role="region"
+            aria-label="Image converter — drop any image to convert its format">
+            <input type="file" accept="image/*" id="convFileInput" onchange="handleConverterFile(this.files[0])"
+              aria-label="Choose an image to convert">
+            <div class="drop-icon" aria-hidden="true">🔄</div>
+            <h3 id="convDropTitle">Drop any image here</h3>
+            <p id="convDropSub">JPEG · PNG · WEBP · GIF · BMP · SVG · HEIC</p>
+          </div>
+
+          <div id="convStatus" style="display:none;margin-top:12px;font-family:var(--mono);
+                   font-size:12px;color:var(--muted2);"></div>
+          <div class="alert alert-err" id="convErr" style="display:none;" role="alert" aria-live="assertive"></div>
+
+          <div id="convResult" style="display:none;margin-top:20px;">
+
+            <div class="slabel" style="margin-bottom:10px;" aria-hidden="true">Output format</div>
+            <div class="conv-fmt-row" role="group" aria-label="Choose output format">
+              <button class="conv-fmt-btn active" onclick="setConverterFormat('jpeg',this)"
+                aria-pressed="true">JPEG</button>
+              <button class="conv-fmt-btn" onclick="setConverterFormat('png',this)" aria-pressed="false">PNG</button>
+              <button class="conv-fmt-btn" onclick="setConverterFormat('webp',this)" aria-pressed="false">WEBP</button>
+            </div>
+
+            <div class="conv-quality-row" id="convQualityRow">
+              <span class="conv-quality-label">Quality</span>
+              <input type="range" id="convQualitySlider" min="10" max="100" value="85"
+                oninput="setConverterQuality(this.value)" aria-label="Output quality percentage">
+              <span id="convQualityVal" class="conv-quality-val">85%</span>
+            </div>
+
+            <div class="conv-preview-wrap">
+              <div class="conv-preview-head">
+                <div class="dot dot-p" aria-hidden="true"></div>
+                <span id="convInfo">—</span>
+              </div>
+              <img id="convPreviewImg" src="" alt="Converted image preview" style="width:100%;max-height:280px;object-fit:contain;
+                       background:var(--surface2);display:block;">
+            </div>
+
+            <div class="conv-actions">
+              <button class="btn btn-primary" onclick="sendConverterToEncoder()"
+                aria-label="Use this converted image in the encoder">
+                ⬆ Use in Encoder
+              </button>
+              <button class="btn btn-teal" onclick="downloadConverted()" aria-label="Download the converted image">
+                ⬇ Download Image
+              </button>
+              <button class="btn btn-ghost btn-sm" onclick="clearConverter()"
+                aria-label="Clear and start over in converter">
+                ✕ Clear
+              </button>
+            </div>
+
+          </div><!-- /convResult -->
+        </div>
+      </div>
+    </div><!-- /convertView -->
+
+  </div><!-- /wrap -->
+
+  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true">
+    <span aria-hidden="true">✓</span>
+    <span id="toastMsg">Done!</span>
+  </div>
+
+  <!-- FIX: #stringCanvas removed — never referenced after switch to makeMinimalPNG() -->
+
+  <button id="floatingDownload" onclick="downloadStringImage()" aria-label="Download the generated PNG file">
+    ⬇ Download PNG
+  </button>
+
+  <!-- Scripts — load order matters: ui → pngHandler → crypto → encoder → decoder → converter -->
+  <script src="static/js/ui.js"></script>
+  <script src="static/js/pngHandler.js"></script>
+  <script src="static/js/crypto.js"></script>
+  <script>
+    /* FIX: Startup check — surface a clear error if crypto.js failed to load
+       (e.g. missing file, network block). Without this, encryptData is
+       undefined and encryption silently fails with a TypeError. */
+    if (typeof encryptData !== 'function') {
+      console.error('[codec64] crypto.js failed to load — password protection unavailable.');
+    }
+  </script>
+  <script src="static/js/encoder.js"></script>
+  <script src="static/js/decoder.js"></script>
+  <script src="static/js/converter.js"></script>
+
+</body>
+
+</html>

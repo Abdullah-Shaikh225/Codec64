@@ -40,25 +40,25 @@ function markerBytes() {
  * @returns {Uint8Array}
  */
 function appendPayloadToPNG(pngBytes, payload) {
-  const marker  = markerBytes();
+  const marker = markerBytes();
 
   // Encode payload as bytes
-  const payLen  = payload.length;
-  const payBuf  = new Uint8Array(payLen);
+  const payLen = payload.length;
+  const payBuf = new Uint8Array(payLen);
   for (let i = 0; i < payLen; i++) payBuf[i] = payload.charCodeAt(i) & 0xff;
 
   // 4-byte big-endian length prefix
   const lenBuf = new Uint8Array(4);
   lenBuf[0] = (payLen >>> 24) & 0xff;
   lenBuf[1] = (payLen >>> 16) & 0xff;
-  lenBuf[2] = (payLen >>>  8) & 0xff;
-  lenBuf[3] =  payLen         & 0xff;
+  lenBuf[2] = (payLen >>> 8) & 0xff;
+  lenBuf[3] = payLen & 0xff;
 
   const out = new Uint8Array(pngBytes.length + marker.length + 4 + payLen);
-  out.set(pngBytes,           0);
-  out.set(marker,             pngBytes.length);
-  out.set(lenBuf,             pngBytes.length + marker.length);
-  out.set(payBuf,             pngBytes.length + marker.length + 4);
+  out.set(pngBytes, 0);
+  out.set(marker, pngBytes.length);
+  out.set(lenBuf, pngBytes.length + marker.length);
+  out.set(payBuf, pngBytes.length + marker.length + 4);
   return out;
 }
 
@@ -76,7 +76,7 @@ function readPNGPayload(bytes) {
   if (!isPNG(bytes)) return null;
 
   const marker = markerBytes();
-  const mLen   = marker.length;
+  const mLen = marker.length;
 
   // ── Strategy 1: scan whole file for marker ─────────────────────────────
   // Start at byte 8 (after PNG sig) to avoid false positives in the sig itself.
@@ -96,20 +96,21 @@ function readPNGPayload(bytes) {
 
     // Read 4-byte length prefix if present
     if (afterMarker + 4 <= bytes.length) {
-      const payLen = ((bytes[afterMarker]     << 24) |
-                      (bytes[afterMarker + 1] << 16) |
-                      (bytes[afterMarker + 2] <<  8) |
-                       bytes[afterMarker + 3]) >>> 0;
+      const payLen = ((bytes[afterMarker] << 24) |
+        (bytes[afterMarker + 1] << 16) |
+        (bytes[afterMarker + 2] << 8) |
+        bytes[afterMarker + 3]) >>> 0;
 
       const payStart = afterMarker + 4;
-      const payEnd   = payStart + payLen;
+      const payEnd = payStart + payLen;
 
       if (payLen > 0 && payEnd <= bytes.length) {
         // Decode bytes → string without TextDecoder to avoid latin1 quirks
         const chars = new Array(payLen);
         for (let k = 0; k < payLen; k++) chars[k] = String.fromCharCode(bytes[payStart + k]);
         const result = chars.join('');
-        if (result.startsWith('data:')) return result;
+        // Accept both plain data URLs and encrypted JSON payloads
+        if (result.startsWith('data:') || result.startsWith('{')) return result;
       }
     }
 
@@ -118,7 +119,8 @@ function readPNGPayload(bytes) {
     const chars = new Array(tail.length);
     for (let k = 0; k < tail.length; k++) chars[k] = String.fromCharCode(tail[k]);
     const result = chars.join('');
-    if (result.startsWith('data:')) return result;
+    // Accept both plain data URLs and encrypted JSON payloads
+    if (result.startsWith('data:') || result.startsWith('{')) return result;
   }
 
   // ── Strategy 2: tEXt chunk (legacy fallback) ────────────────────────────
@@ -129,7 +131,7 @@ function readPNGPayload(bytes) {
 function findIEND(bytes) {
   let offset = 8;
   while (offset + 12 <= bytes.length) {
-    const len  = readU32(bytes, offset);
+    const len = readU32(bytes, offset);
     const type = readStr(bytes, offset + 4, 4);
     if (type === 'IEND') return offset;
     if (len > bytes.length) break;
@@ -144,10 +146,10 @@ function readPNGTextChunk(bytes, keyword) {
   let offset = 8;
 
   while (offset + 12 <= bytes.length) {
-    const len  = readU32(bytes, offset);
+    const len = readU32(bytes, offset);
     const type = readStr(bytes, offset + 4, 4);
-    const ds   = offset + 8;
-    const de   = ds + len;
+    const ds = offset + 8;
+    const de = ds + len;
 
     if (de > bytes.length) break;
 
@@ -175,14 +177,14 @@ function readPNGTextChunk(bytes, keyword) {
 // ── Chunk builder ─────────────────────────────────────────────────────────────
 function buildPNGChunk(type, data) {
   const len = data.length;
-  const c   = new Uint8Array(12 + len);
+  const c = new Uint8Array(12 + len);
   c[0] = (len >>> 24) & 0xff; c[1] = (len >>> 16) & 0xff;
-  c[2] = (len >>>  8) & 0xff; c[3] =  len         & 0xff;
+  c[2] = (len >>> 8) & 0xff; c[3] = len & 0xff;
   for (let i = 0; i < 4; i++) c[4 + i] = type.charCodeAt(i);
   c.set(data, 8);
   const crc = crc32(c.slice(4, 8 + len));
-  c[8  + len] = (crc >>> 24) & 0xff; c[9  + len] = (crc >>> 16) & 0xff;
-  c[10 + len] = (crc >>>  8) & 0xff; c[11 + len] =  crc         & 0xff;
+  c[8 + len] = (crc >>> 24) & 0xff; c[9 + len] = (crc >>> 16) & 0xff;
+  c[10 + len] = (crc >>> 8) & 0xff; c[11 + len] = crc & 0xff;
   return c;
 }
 
@@ -203,7 +205,7 @@ function crc32(buf) {
 
 // ── Byte helpers ──────────────────────────────────────────────────────────────
 function readU32(b, o) {
-  return ((b[o] << 24) | (b[o+1] << 16) | (b[o+2] << 8) | b[o+3]) >>> 0;
+  return ((b[o] << 24) | (b[o + 1] << 16) | (b[o + 2] << 8) | b[o + 3]) >>> 0;
 }
 function readStr(b, o, n) {
   let s = '';
