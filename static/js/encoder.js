@@ -135,7 +135,7 @@ function handleFile(file) {
 
   tempImg.onload = () => {
     // FIX: Revoke immediately — the img element retains a reference; no need
-    // to store it. Storing it in state was dead weight.shaikh
+    // to store it. Storing it in state was dead weight.
     URL.revokeObjectURL(blobURL);
 
     const previewImg = document.getElementById('previewImg');
