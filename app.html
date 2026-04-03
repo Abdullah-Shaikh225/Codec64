@@ -39,9 +39,9 @@
 
   <div class="wrap">
 
-    <header style="position:relative;margin-bottom:10px;">
-      <button id="homeBtn" class="btn btn-ghost btn-sm" style="display:none;position:absolute;left:0;top:-5px;"
-        onclick="showView('onboardingView')" aria-label="Back to Home">
+    <header style="margin-bottom:16px;">
+      <button id="homeBtn" class="btn btn-ghost btn-sm" style="display:none;" onclick="showView('onboardingView')"
+        aria-label="Back to Home">
         🔙 Home
       </button>
       <div id="mainTagline" style="display:none;"></div>
@@ -383,6 +383,83 @@
           transform: translateY(-2px);
           box-shadow: 0 8px 24px var(--accent-glow);
         }
+
+        /* Swipe hint - mobile only */
+        .swipe-hint {
+          display: none;
+          position: absolute;
+          bottom: 40px;
+          left: 0;
+          right: 0;
+          z-index: 20;
+          pointer-events: none;
+          text-align: center;
+          animation: swipeHintFadeIn 0.5s ease;
+        }
+
+        .swipe-hint-inner {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: rgba(0, 0, 0, 0.6);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 20px;
+          padding: 8px 18px;
+          color: rgba(255, 255, 255, 0.7);
+          font-size: 0.8rem;
+          font-family: var(--mono);
+        }
+
+        .swipe-hint-hand {
+          display: inline-block;
+          font-size: 1.3rem;
+          animation: swipeSlide 1.5s ease-in-out infinite;
+        }
+
+        @keyframes swipeSlide {
+
+          0%,
+          100% {
+            transform: translateX(12px);
+            opacity: 0.4;
+          }
+
+          50% {
+            transform: translateX(-12px);
+            opacity: 1;
+          }
+        }
+
+        @keyframes swipeHintFadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .swipe-hint.hidden {
+          animation: swipeHintFadeOut 0.4s ease forwards;
+        }
+
+        @keyframes swipeHintFadeOut {
+          to {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+        }
+
+        @media (max-width: 799px) {
+          .swipe-hint {
+            display: block;
+          }
+        }
       </style>
 
       <div class="content-article"
@@ -398,176 +475,192 @@
           <button class="cta-btn" onclick="window.location.href='app.html'">Try Codec64 Now ➔</button>
         </div>
 
-        <div class="guide-grid">
+        <div style="position:relative;">
+          <div class="guide-grid" id="guideGrid">
 
-          <div class="guide-section">
-            <h2 style="color:var(--accent); font-size:1.5rem; margin-bottom:15px;">❓ What is Codec64?</h2>
-            <p style="margin-bottom:15px;">Codec64 is an image encoder and decoder that allows you to:</p>
-            <ul style="margin-bottom:15px; color:var(--muted); padding-left:20px; list-style-type:square;">
-              <li style="margin-bottom:8px;">Convert image to Base64 (internally, without showing complexity)</li>
-              <li style="margin-bottom:8px;">Turn images into private downloadable files</li>
-              <li style="margin-bottom:8px;">Secure images with password protection</li>
-              <li style="margin-bottom:8px;">Restore images instantly</li>
-              <li style="margin-bottom:0;">Convert images between formats</li>
-            </ul>
-            <p style="color:var(--teal); margin-bottom:0; font-weight:600;">It works completely online without requiring
-              any login.</p>
-          </div>
+            <div class="guide-section">
+              <h2 style="color:var(--accent); font-size:1.5rem; margin-bottom:15px;">❓ What is Codec64?</h2>
+              <p style="margin-bottom:15px;">Codec64 is an image encoder and decoder that allows you to:</p>
+              <ul style="margin-bottom:15px; color:var(--muted); padding-left:20px; list-style-type:square;">
+                <li style="margin-bottom:8px;">Convert image to Base64 (internally, without showing complexity)</li>
+                <li style="margin-bottom:8px;">Turn images into private downloadable files</li>
+                <li style="margin-bottom:8px;">Secure images with password protection</li>
+                <li style="margin-bottom:8px;">Restore images instantly</li>
+                <li style="margin-bottom:0;">Convert images between formats</li>
+              </ul>
+              <p style="color:var(--teal); margin-bottom:0; font-weight:600;">It works completely online without
+                requiring
+                any login.</p>
+            </div>
 
-          <div class="guide-section">
-            <h2 style="color:var(--accent); font-size:1.5rem; margin-bottom:15px;">🖼️ How to Encode an Image Online
-            </h2>
-            <p style="margin-bottom:25px;">Encoding an image means turning it into a portable and private format that
-              can
-              be stored or shared easily.</p>
+            <div class="guide-section">
+              <h2 style="color:var(--accent); font-size:1.5rem; margin-bottom:15px;">🖼️ How to Encode an Image Online
+              </h2>
+              <p style="margin-bottom:25px;">Encoding an image means turning it into a portable and private format that
+                can
+                be stored or shared easily.</p>
 
-            <div class="guide-step">
-              <div class="guide-step-number">1</div>
-              <div>
-                <h3 style="color:var(--text); font-size:1.1rem; margin-bottom:4px;">Upload your image</h3>
-                <p style="color:var(--muted); margin:0; font-size:0.95rem;">Choose any image from your device.</p>
+              <div class="guide-step">
+                <div class="guide-step-number">1</div>
+                <div>
+                  <h3 style="color:var(--text); font-size:1.1rem; margin-bottom:4px;">Upload your image</h3>
+                  <p style="color:var(--muted); margin:0; font-size:0.95rem;">Choose any image from your device.</p>
+                </div>
+              </div>
+
+              <div class="guide-step">
+                <div class="guide-step-number">2</div>
+                <div>
+                  <h3 style="color:var(--text); font-size:1.1rem; margin-bottom:4px;">Add details (optional)</h3>
+                  <p style="color:var(--muted); margin:0; font-size:0.95rem;">Add a note for identification or a
+                    password
+                    for high-grade security.</p>
+                </div>
+              </div>
+
+              <div class="guide-step" style="margin-bottom:0;">
+                <div class="guide-step-number">3</div>
+                <div>
+                  <h3 style="color:var(--text); font-size:1.1rem; margin-bottom:4px;">Generate private image</h3>
+                  <p style="color:var(--muted); margin:0; font-size:0.95rem;">Download the encoded image file. This acts
+                    as
+                    a secure container.</p>
+                </div>
               </div>
             </div>
 
-            <div class="guide-step">
-              <div class="guide-step-number">2</div>
-              <div>
-                <h3 style="color:var(--text); font-size:1.1rem; margin-bottom:4px;">Add details (optional)</h3>
-                <p style="color:var(--muted); margin:0; font-size:0.95rem;">Add a note for identification or a password
-                  for high-grade security.</p>
+            <div class="guide-section">
+              <h2 style="color:var(--accent); font-size:1.5rem; margin-bottom:15px;">🔄 How to Decode and Restore Image
+              </h2>
+              <p style="margin-bottom:25px;">To restore your image:</p>
+
+              <div class="guide-step">
+                <div class="guide-step-number">1</div>
+                <div>
+                  <h3 style="color:var(--text); font-size:1.1rem; margin-bottom:4px;">Upload the encoded image</h3>
+                  <p style="color:var(--muted); margin:0; font-size:0.95rem;">Upload the PNG image payload you
+                    previously
+                    generated.</p>
+                </div>
+              </div>
+
+              <div class="guide-step" style="margin-bottom:0;">
+                <div class="guide-step-number">2</div>
+                <div>
+                  <h3 style="color:var(--text); font-size:1.1rem; margin-bottom:4px;">Enter password &amp; recover</h3>
+                  <p style="color:var(--muted); margin:0; font-size:0.95rem;">Input your password (if used) and
+                    instantly
+                    recover the original picture.</p>
+                </div>
               </div>
             </div>
 
-            <div class="guide-step" style="margin-bottom:0;">
-              <div class="guide-step-number">3</div>
-              <div>
-                <h3 style="color:var(--text); font-size:1.1rem; margin-bottom:4px;">Generate private image</h3>
-                <p style="color:var(--muted); margin:0; font-size:0.95rem;">Download the encoded image file. This acts
-                  as
-                  a secure container.</p>
+            <div class="guide-section">
+              <h2 style="color:var(--accent); font-size:1.5rem; margin-bottom:15px;">🔒 Secure Image Sharing</h2>
+              <p style="margin-bottom:15px;">Codec64 allows secure image sharing without uploading your data anywhere.
+              </p>
+              <ul style="margin-bottom:0; color:var(--muted); padding-left:20px;">
+                <li style="margin-bottom:8px;">Share encoded image files safely</li>
+                <li style="margin-bottom:8px;">Add password protection for extra security</li>
+                <li style="margin-bottom:0;">Only authorized users can restore the image</li>
+              </ul>
+            </div>
+
+            <div class="guide-section">
+              <h2 style="color:var(--accent); font-size:1.5rem; margin-bottom:15px;">⚡ Image to Base64 Converter</h2>
+              <p style="margin-bottom:15px;">Internally, the app converts your image into a format similar to Base64,
+                allowing it to be stored and restored perfectly.</p>
+              <p style="color:var(--teal); margin-bottom:0;">You don’t need to understand technical details — everything
+                works automatically.</p>
+            </div>
+
+            <div class="guide-section">
+              <h2 style="color:var(--accent); font-size:1.5rem; margin-bottom:15px;">🔁 Convert Image Format Online</h2>
+              <p style="margin-bottom:15px;">You can also use Codec64 as an image converter:</p>
+              <ul style="margin-bottom:15px; color:var(--muted); padding-left:20px; list-style-type:circle;">
+                <li style="margin-bottom:8px;">Convert image to PNG</li>
+                <li style="margin-bottom:8px;">Convert image to JPEG</li>
+                <li style="margin-bottom:8px;">Convert image to WEBP</li>
+              </ul>
+              <p style="margin-bottom:0; color:var(--teal);">This works instantly in your browser.</p>
+            </div>
+
+            <div class="guide-section"
+              style="border-color: rgba(106, 255, 219, .2); background: rgba(106, 255, 219, .03);">
+              <h2 style="color:var(--teal); font-size:1.5rem; margin-bottom:15px;">🛡️ Your Privacy Matters</h2>
+              <p style="margin-bottom:15px;">Codec64 is designed as a privacy-first image tool.</p>
+              <ul style="margin-bottom:15px; color:var(--muted); padding-left:20px;">
+                <li style="margin-bottom:8px;"><strong>No image uploads to servers</strong></li>
+                <li style="margin-bottom:8px;">No tracking of your files</li>
+                <li style="margin-bottom:8px;">No storage of your data</li>
+                <li style="margin-bottom:0;">Everything runs locally in your browser</li>
+              </ul>
+              <p style="color:var(--teal); margin-bottom:0; font-weight:600;">Your images remain completely under your
+                control.</p>
+            </div>
+
+            <div class="guide-section"
+              style="border-color: rgba(255, 184, 106, .2); background: rgba(255, 184, 106, .03);">
+              <h2 style="color:var(--amber); font-size:1.5rem; margin-bottom:15px;">⚠️ Why Does the Encoded Image Look
+                Different?</h2>
+              <p style="margin-bottom:10px;">The encoded image may look blank or dark because it stores hidden data
+                instead
+                of a visible picture.</p>
+              <p style="margin-bottom:0; color:var(--muted);">This is expected and ensures your image is stored
+                securely.
+              </p>
+            </div>
+
+            <div class="guide-section">
+              <h2 style="color:var(--accent); font-size:1.7rem; margin-bottom:20px; text-align:center;">Frequently Asked
+                Questions</h2>
+              <div class="guide-faq">
+                <details>
+                  <summary>Is this a free image encoder and decoder?</summary>
+                  <p>Yes, Codec64 is completely free to use.</p>
+                </details>
+                <details>
+                  <summary>Can I encode images online without uploading?</summary>
+                  <p>Yes, everything happens in your browser.</p>
+                </details>
+                <details>
+                  <summary>Is there any loss in quality?</summary>
+                  <p>No, your original image is restored exactly.</p>
+                </details>
+                <details>
+                  <summary>Can I share encoded images?</summary>
+                  <p>Yes, you can share them like normal files.</p>
+                </details>
+                <details>
+                  <summary>What if I forget my password?</summary>
+                  <p style="color:var(--red); font-weight:700;">The image cannot be recovered.</p>
+                </details>
               </div>
             </div>
-          </div>
 
-          <div class="guide-section">
-            <h2 style="color:var(--accent); font-size:1.5rem; margin-bottom:15px;">🔄 How to Decode and Restore Image
-            </h2>
-            <p style="margin-bottom:25px;">To restore your image:</p>
-
-            <div class="guide-step">
-              <div class="guide-step-number">1</div>
+            <div class="guide-section"
+              style="border-color:var(--accent); text-align:center; display:flex; justify-content:center; align-items:center;">
               <div>
-                <h3 style="color:var(--text); font-size:1.1rem; margin-bottom:4px;">Upload the encoded image</h3>
-                <p style="color:var(--muted); margin:0; font-size:0.95rem;">Upload the PNG image payload you previously
-                  generated.</p>
+                <h2 style="color:var(--text); font-size:1.4rem; margin-bottom:15px;">Ready to secure your images?</h2>
+                <p style="color:var(--muted); margin-bottom:20px;">If you're looking for a fast, secure, and private
+                  online
+                  solution to manage your images seamlessly, Codec64 has you completely covered.</p>
+                <button class="cta-btn" style="width:100%; max-width:300px;"
+                  onclick="window.location.href='app.html'">Try
+                  Codec64 Now
+                  ➔</button>
               </div>
             </div>
 
-            <div class="guide-step" style="margin-bottom:0;">
-              <div class="guide-step-number">2</div>
-              <div>
-                <h3 style="color:var(--text); font-size:1.1rem; margin-bottom:4px;">Enter password &amp; recover</h3>
-                <p style="color:var(--muted); margin:0; font-size:0.95rem;">Input your password (if used) and instantly
-                  recover the original picture.</p>
-              </div>
+          </div><!-- /guide-grid -->
+
+          <div class="swipe-hint" id="swipeHint">
+            <div class="swipe-hint-inner">
+              <span class="swipe-hint-hand">👈</span>
+              Swipe to explore
             </div>
           </div>
-
-          <div class="guide-section">
-            <h2 style="color:var(--accent); font-size:1.5rem; margin-bottom:15px;">🔒 Secure Image Sharing</h2>
-            <p style="margin-bottom:15px;">Codec64 allows secure image sharing without uploading your data anywhere.</p>
-            <ul style="margin-bottom:0; color:var(--muted); padding-left:20px;">
-              <li style="margin-bottom:8px;">Share encoded image files safely</li>
-              <li style="margin-bottom:8px;">Add password protection for extra security</li>
-              <li style="margin-bottom:0;">Only authorized users can restore the image</li>
-            </ul>
-          </div>
-
-          <div class="guide-section">
-            <h2 style="color:var(--accent); font-size:1.5rem; margin-bottom:15px;">⚡ Image to Base64 Converter</h2>
-            <p style="margin-bottom:15px;">Internally, the app converts your image into a format similar to Base64,
-              allowing it to be stored and restored perfectly.</p>
-            <p style="color:var(--teal); margin-bottom:0;">You don’t need to understand technical details — everything
-              works automatically.</p>
-          </div>
-
-          <div class="guide-section">
-            <h2 style="color:var(--accent); font-size:1.5rem; margin-bottom:15px;">🔁 Convert Image Format Online</h2>
-            <p style="margin-bottom:15px;">You can also use Codec64 as an image converter:</p>
-            <ul style="margin-bottom:15px; color:var(--muted); padding-left:20px; list-style-type:circle;">
-              <li style="margin-bottom:8px;">Convert image to PNG</li>
-              <li style="margin-bottom:8px;">Convert image to JPEG</li>
-              <li style="margin-bottom:8px;">Convert image to WEBP</li>
-            </ul>
-            <p style="margin-bottom:0; color:var(--teal);">This works instantly in your browser.</p>
-          </div>
-
-          <div class="guide-section"
-            style="border-color: rgba(106, 255, 219, .2); background: rgba(106, 255, 219, .03);">
-            <h2 style="color:var(--teal); font-size:1.5rem; margin-bottom:15px;">🛡️ Your Privacy Matters</h2>
-            <p style="margin-bottom:15px;">Codec64 is designed as a privacy-first image tool.</p>
-            <ul style="margin-bottom:15px; color:var(--muted); padding-left:20px;">
-              <li style="margin-bottom:8px;"><strong>No image uploads to servers</strong></li>
-              <li style="margin-bottom:8px;">No tracking of your files</li>
-              <li style="margin-bottom:8px;">No storage of your data</li>
-              <li style="margin-bottom:0;">Everything runs locally in your browser</li>
-            </ul>
-            <p style="color:var(--teal); margin-bottom:0; font-weight:600;">Your images remain completely under your
-              control.</p>
-          </div>
-
-          <div class="guide-section"
-            style="border-color: rgba(255, 184, 106, .2); background: rgba(255, 184, 106, .03);">
-            <h2 style="color:var(--amber); font-size:1.5rem; margin-bottom:15px;">⚠️ Why Does the Encoded Image Look
-              Different?</h2>
-            <p style="margin-bottom:10px;">The encoded image may look blank or dark because it stores hidden data
-              instead
-              of a visible picture.</p>
-            <p style="margin-bottom:0; color:var(--muted);">This is expected and ensures your image is stored securely.
-            </p>
-          </div>
-
-          <div class="guide-section">
-            <h2 style="color:var(--accent); font-size:1.7rem; margin-bottom:20px; text-align:center;">Frequently Asked
-              Questions</h2>
-            <div class="guide-faq">
-              <details>
-                <summary>Is this a free image encoder and decoder?</summary>
-                <p>Yes, Codec64 is completely free to use.</p>
-              </details>
-              <details>
-                <summary>Can I encode images online without uploading?</summary>
-                <p>Yes, everything happens in your browser.</p>
-              </details>
-              <details>
-                <summary>Is there any loss in quality?</summary>
-                <p>No, your original image is restored exactly.</p>
-              </details>
-              <details>
-                <summary>Can I share encoded images?</summary>
-                <p>Yes, you can share them like normal files.</p>
-              </details>
-              <details>
-                <summary>What if I forget my password?</summary>
-                <p style="color:var(--red); font-weight:700;">The image cannot be recovered.</p>
-              </details>
-            </div>
-          </div>
-
-          <div class="guide-section"
-            style="border-color:var(--accent); text-align:center; display:flex; justify-content:center; align-items:center;">
-            <div>
-              <h2 style="color:var(--text); font-size:1.4rem; margin-bottom:15px;">Ready to secure your images?</h2>
-              <p style="color:var(--muted); margin-bottom:20px;">If you're looking for a fast, secure, and private
-                online
-                solution to manage your images seamlessly, Codec64 has you completely covered.</p>
-              <button class="cta-btn" style="width:100%; max-width:300px;" onclick="window.location.href='app.html'">Try
-                Codec64 Now
-                ➔</button>
-            </div>
-          </div>
-
-        </div><!-- /guide-grid -->
+        </div><!-- /position:relative wrapper -->
       </div>
 
       <footer style="margin-top:48px;text-align:center;font-family:var(--mono);font-size:11px;
@@ -595,7 +688,7 @@
 
       <div id="encodePreSelect" class="action-section" style="margin-top:0;padding-top:20px;">
         <h2 class="section-title">How do you want to encode the image?</h2>
-        <div class="action-cards" style="grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="action-cards" style="grid-template-columns:1fr;gap:16px;">
 
           <div class="ac" onclick="startNormalEncode()" role="button" tabindex="0"
             onkeydown="if(event.key==='Enter'||event.key===' ')startNormalEncode()">
@@ -626,8 +719,13 @@
           <div style="font-size:.9rem;color:var(--muted);margin-bottom:16px;">
             ⚠️ If you forget this password, your encoded image cannot be recovered.
           </div>
-          <input type="password" id="setupPasswordInput" class="url-inp password-inp"
-            style="width:100%;margin-bottom:16px;" placeholder="🔒 Enter a strong password">
+          <div style="position:relative;">
+            <input type="password" id="setupPasswordInput" class="url-inp password-inp"
+              style="width:100%;margin-bottom:16px;padding-right:44px;" placeholder="🔒 Enter a strong password">
+            <button type="button" onclick="togglePasswordVisibility('setupPasswordInput', this)"
+              style="position:absolute; right:10px; top:12px; background:none; border:none; color:var(--muted); cursor:pointer; font-size:0.85rem; padding:2px 4px; font-family:var(--mono);"
+              aria-label="Toggle password visibility">Show</button>
+          </div>
           <div class="alert alert-err" id="setupPasswordErr" role="alert" aria-live="assertive"
             style="display:none;margin-bottom:16px;"></div>
           <div class="row" style="justify-content:center;margin-top:0;">
@@ -709,21 +807,9 @@
 
                 <div class="big-save-body">
                   <p>Your image has been turned into a <strong>text string</strong>.
-                    Pick one or both ways to save it:</p>
+                    Click below to save it as a file:</p>
 
                   <div class="action-cards">
-                    <div class="ac ac-teal" onclick="doCopy(this)" id="copyCard" role="button" tabindex="0"
-                      aria-label="Copy encoded image to clipboard"
-                      onkeydown="if(event.key==='Enter'||event.key===' ')doCopy(this)">
-                      <div class="ac-icon" aria-hidden="true">📋</div>
-                      <div class="ac-title">Copy to Clipboard</div>
-                      <div class="ac-desc">
-                        Paste into Notes, WhatsApp, email — any app.
-                        Best for quick sharing right now.
-                      </div>
-                      <div class="ac-badge" id="copyBadge" aria-live="polite">Tap to copy</div>
-                    </div>
-
                     <div class="ac ac-teal" onclick="doSavePNG(this)" id="pngCard" role="button" tabindex="0"
                       aria-label="Build encoded PNG file for download"
                       onkeydown="if(event.key==='Enter'||event.key===' ')doSavePNG(this)">
@@ -737,9 +823,6 @@
                     </div>
                   </div>
 
-                  <div class="alert alert-ok" id="copyAlert" role="status" aria-live="polite">
-                    ✓ Copied to clipboard! Scroll down to the Restore section and paste it.
-                  </div>
 
                   <div id="pngDownloadPanel" style="display:none;margin-top:18px;">
                     <div class="big-save" style="border-color:rgba(106,255,219,.3);">
@@ -771,15 +854,6 @@
                 </div>
               </div>
 
-              <div class="row" style="margin-top:14px;">
-                <button class="btn btn-ghost btn-sm" onclick="quickDecode()"
-                  aria-label="Test: immediately restore your image to verify the encoding">
-                  ⚡ Test — restore image now
-                </button>
-                <button class="btn btn-ghost btn-sm" onclick="clearAll()" aria-label="Start over with a new image">
-                  ✕ Start over
-                </button>
-              </div>
 
             </div><!-- /save-section -->
           </div><!-- /card-body -->
@@ -801,7 +875,25 @@
         <div class="adv-panel" id="advPanel" role="region" aria-label="Advanced developer tools">
           <div class="adv-inner">
 
-            <div class="slabel" style="margin-bottom:8px;" aria-hidden="true">Raw base64 string</div>
+            <div style="margin-bottom:24px; padding-bottom:24px; border-bottom:1px solid rgba(255,255,255,0.06);">
+              <div class="slabel" style="margin-bottom:8px;" aria-hidden="true">Copy encoded string to clipboard</div>
+              <div class="action-cards" style="grid-template-columns:1fr;">
+                <div class="ac ac-teal" onclick="doCopy(this)" id="copyCard" role="button" tabindex="0"
+                  aria-label="Copy encoded image to clipboard"
+                  onkeydown="if(event.key==='Enter'||event.key===' ')doCopy(this)">
+                  <div class="ac-icon" aria-hidden="true">📋</div>
+                  <div class="ac-title">Copy to Clipboard</div>
+                  <div class="ac-desc">
+                    Paste into Notes, WhatsApp, email — any app.
+                    Best for quick sharing right now.
+                  </div>
+                  <div class="ac-badge" id="copyBadge" aria-live="polite">Tap to copy</div>
+                </div>
+              </div>
+              <div class="alert alert-ok" id="copyAlert" role="status" aria-live="polite" style="display:none;">
+                ✓ Copied to clipboard!
+              </div>
+            </div>
             <div style="position:relative;">
               <div class="raw-box" id="rawBox">
                 <span id="rawPreview">Upload an image to see the raw string.</span>
@@ -874,7 +966,7 @@
 
     <!-- ══════════ DECODE VIEW ════════════════════════════════════════════════ -->
     <div id="decodeView" class="view">
-      <div class="card" id="decodeCard" style="margin-top:20px;">
+      <div class="card" id="decodeCard" style="margin-top:40px;">
         <div class="card-shine" aria-hidden="true"></div>
         <div class="card-body">
 
@@ -1019,10 +1111,6 @@
 
   <!-- FIX: #stringCanvas removed — never referenced after switch to makeMinimalPNG() -->
 
-  <button id="floatingDownload" onclick="downloadStringImage()" aria-label="Download the generated PNG file">
-    ⬇ Download PNG
-  </button>
-
   <!-- Scripts — load order matters: ui → pngHandler → crypto → encoder → decoder → converter -->
   <script src="static/js/ui.js"></script>
   <script src="static/js/pngHandler.js"></script>
@@ -1038,6 +1126,27 @@
   <script src="static/js/encoder.js"></script>
   <script src="static/js/decoder.js"></script>
   <script src="static/js/converter.js"></script>
+
+  <script>
+    // Swipe hint — auto-hide after 3.5s or on first scroll
+    (function () {
+      const grid = document.getElementById('guideGrid');
+      const hint = document.getElementById('swipeHint');
+      if (!grid || !hint) return;
+
+      let dismissed = false;
+      function dismiss() {
+        if (dismissed) return;
+        dismissed = true;
+        hint.classList.add('hidden');
+        setTimeout(() => { hint.style.display = 'none'; }, 500);
+      }
+
+      grid.addEventListener('scroll', dismiss, { once: true, passive: true });
+      grid.addEventListener('touchmove', dismiss, { once: true, passive: true });
+      setTimeout(dismiss, 3500);
+    })();
+  </script>
 
 </body>
 

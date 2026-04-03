@@ -48,7 +48,7 @@ function showPasswordInputForEncode() {
 }
 
 function submitPasswordForEncode() {
-  const pw    = document.getElementById('setupPasswordInput').value;
+  const pw = document.getElementById('setupPasswordInput').value;
   const errEl = document.getElementById('setupPasswordErr');
   if (!pw || pw.trim() === '') {
     errEl.style.display = 'block';
@@ -79,11 +79,11 @@ function cancelEncodeSetup() {
 // ── Text wrap helper (module-scope, not recreated per-save) ───────────────────
 function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
   const words = text.split(' ');
-  let line  = '';
+  let line = '';
   const lines = [];
   for (let n = 0; n < words.length; n++) {
-    const testLine    = line + words[n] + ' ';
-    const testWidth   = ctx.measureText(testLine).width;
+    const testLine = line + words[n] + ' ';
+    const testWidth = ctx.measureText(testLine).width;
     if (testWidth > maxWidth && n > 0) {
       lines.push(line.trim());
       line = words[n] + ' ';
@@ -94,7 +94,7 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
   if (line.trim()) lines.push(line.trim());
   lines.forEach((l, i) => {
     ctx.strokeText(l, x, y + i * lineHeight);
-    ctx.fillText(l,   x, y + i * lineHeight);
+    ctx.fillText(l, x, y + i * lineHeight);
   });
   return lines.length; // return line count so callers can compute total height
 }
@@ -141,7 +141,7 @@ function handleFile(file) {
     const previewImg = document.getElementById('previewImg');
     // Re-create a fresh URL just for the preview img src
     const previewURL = URL.createObjectURL(file);
-    previewImg.onload  = () => URL.revokeObjectURL(previewURL);
+    previewImg.onload = () => URL.revokeObjectURL(previewURL);
     previewImg.onerror = () => URL.revokeObjectURL(previewURL);
     previewImg.src = previewURL;
     previewImg.alt = 'Preview of ' + file.name;
@@ -150,17 +150,19 @@ function handleFile(file) {
     document.getElementById('imgSize').textContent = formatBytes(file.size) + ' (preview)';
     document.getElementById('imgStrip').style.display = 'block';
     document.getElementById('saveSection').style.display = 'block';
-    document.getElementById('copyAlert').style.display = 'none';
-    document.getElementById('copyBadge').textContent = 'Tap to copy';
-    document.getElementById('pngBadge').textContent  = 'Tap to build PNG';
-    document.getElementById('copyCard').classList.remove('done');
+    const copyAlertEl = document.getElementById('copyAlert');
+    if (copyAlertEl) copyAlertEl.style.display = 'none';
+    const copyBadgeEl = document.getElementById('copyBadge');
+    if (copyBadgeEl) copyBadgeEl.textContent = 'Tap to copy';
+    document.getElementById('pngBadge').textContent = 'Tap to build PNG';
+    const copyCardEl = document.getElementById('copyCard');
+    if (copyCardEl) copyCardEl.classList.remove('done');
     document.getElementById('pngCard').classList.remove('done');
     document.getElementById('pngDownloadPanel').style.display = 'none';
-    document.getElementById('floatingDownload').style.display = 'none';
 
     // FIX: pngBlob/pngBlobURL cleanup — only pngBlob is kept now
-    state.pngBlob    = null;
-    state.encoded    = '';
+    state.pngBlob = null;
+    state.encoded = '';
 
     setStep(2);
     announce('Image loaded: ' + file.name + '. Choose how to save.');
@@ -193,11 +195,11 @@ function performLazyEncoding(onSuccess, onError) {
     let h = tempImg.naturalHeight;
     if (w > MAX_PX || h > MAX_PX) {
       if (w >= h) { h = Math.round(h * MAX_PX / w); w = MAX_PX; }
-      else        { w = Math.round(w * MAX_PX / h); h = MAX_PX; }
+      else { w = Math.round(w * MAX_PX / h); h = MAX_PX; }
     }
 
     const canvas = document.createElement('canvas');
-    canvas.width  = w;
+    canvas.width = w;
     canvas.height = h;
     const ctx = canvas.getContext('2d');
 
@@ -209,18 +211,18 @@ function performLazyEncoding(onSuccess, onError) {
     // readable on any image (was: white text dead-center, invisible on light images)
     const note = (document.getElementById('imageNote')?.value || '').trim();
     if (note !== '') {
-      const fontSize   = Math.max(16, Math.round(w * 0.025));
+      const fontSize = Math.max(16, Math.round(w * 0.025));
       const lineHeight = Math.round(fontSize * 1.4);
-      const maxWidth   = w * 0.85;
-      const padding    = Math.round(fontSize * 0.7);
+      const maxWidth = w * 0.85;
+      const padding = Math.round(fontSize * 0.7);
 
-      ctx.font      = `bold ${fontSize}px Arial`;
+      ctx.font = `bold ${fontSize}px Arial`;
       ctx.textAlign = 'left';
 
       // Measure how many lines the text will take
-      const words    = note.split(' ');
-      let line       = '';
-      const lines    = [];
+      const words = note.split(' ');
+      let line = '';
+      const lines = [];
       for (let n = 0; n < words.length; n++) {
         const test = line + words[n] + ' ';
         if (ctx.measureText(test).width > maxWidth && n > 0) {
@@ -231,9 +233,9 @@ function performLazyEncoding(onSuccess, onError) {
       }
       if (line.trim()) lines.push(line.trim());
 
-      const blockH  = lines.length * lineHeight + padding * 2;
-      const blockY  = h - blockH - Math.round(h * 0.02);
-      const blockX  = Math.round(w * 0.04);
+      const blockH = lines.length * lineHeight + padding * 2;
+      const blockY = h - blockH - Math.round(h * 0.02);
+      const blockX = Math.round(w * 0.04);
 
       // Semi-transparent dark background
       ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
@@ -244,14 +246,14 @@ function performLazyEncoding(onSuccess, onError) {
       ctx.fill();
 
       // Text
-      ctx.fillStyle   = '#ffffff';
+      ctx.fillStyle = '#ffffff';
       ctx.strokeStyle = 'rgba(0,0,0,0.4)';
-      ctx.lineWidth   = 2;
+      ctx.lineWidth = 2;
 
       lines.forEach((l, i) => {
         const ty = blockY + padding + fontSize + i * lineHeight;
         ctx.strokeText(l, blockX, ty);
-        ctx.fillText(l,   blockX, ty);
+        ctx.fillText(l, blockX, ty);
       });
     }
 
@@ -274,14 +276,14 @@ function performLazyEncoding(onSuccess, onError) {
 // ── Copy to clipboard ─────────────────────────────────────────────────────────
 function doCopy(card) {
   if (!uploadedImage) return;
-  const badge   = document.getElementById('copyBadge');
+  const badge = document.getElementById('copyBadge');
   const alertEl = document.getElementById('copyAlert');
   badge.textContent = '⏳ Encoding…';
 
   performLazyEncoding(async () => {
     try {
       const password = state.encodePassword;
-      let finalData  = state.encoded;
+      let finalData = state.encoded;
 
       if (password) {
         badge.textContent = '⏳ Encrypting…';
@@ -293,13 +295,11 @@ function doCopy(card) {
         badge.textContent = '✓ Copied!';
         card.classList.add('done');
         alertEl.style.display = 'block';
-        showToast('Copied to clipboard!' + (password ? ' (🔒 encrypted)' : ''));
         announce('Encoded string copied to clipboard.');
         setStep(3);
       };
       const fail = () => {
         badge.textContent = '⚠ Failed — use Download instead';
-        showToast('Clipboard blocked — use Download PNG', true);
         announce('Clipboard copy failed. Use the Download PNG option instead.');
       };
 
@@ -336,20 +336,15 @@ function doSavePNG(card) {
       setTimeout(() => {
         try {
           buildStringPNG(payloadForPNG);
-          badge.textContent = '✓ Ready — click below';
+          badge.textContent = '✓ Downloaded!';
           card.classList.add('done');
-
-          const panel = document.getElementById('pngDownloadPanel');
-          panel.style.display = 'block';
-          panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          document.getElementById('floatingDownload').style.display = 'block';
-
-          showToast('PNG ready — click Download to save!' + (password ? ' (🔒 encrypted)' : ''));
-          announce('PNG built. Click the Download PNG button to save it.');
+          announce('PNG built and downloading.');
           setStep(3);
+
+          // Directly trigger download
+          downloadStringImage();
         } catch (e) {
           badge.textContent = '⚠ Error — try again';
-          showToast('Error building PNG: ' + e.message, true);
           announce('Error building PNG: ' + e.message);
         }
         card.style.pointerEvents = '';
@@ -357,21 +352,19 @@ function doSavePNG(card) {
     } catch (e) {
       badge.textContent = '⚠ Encryption Error';
       card.style.pointerEvents = '';
-      showToast('Error: ' + e.message, true);
     }
   }, (e) => {
     badge.textContent = '⚠ Error';
     card.style.pointerEvents = '';
-    showToast('Error encoding: ' + e.message, true);
   });
 }
 
 // ── PNG builder ───────────────────────────────────────────────────────────────
 function buildStringPNG(text) {
   const pngBytes = makeMinimalPNG();
-  const final    = appendPayloadToPNG(pngBytes, text);
-  const blob     = new Blob([final], { type: 'image/png' });
-  state.pngBlob  = blob;
+  const final = appendPayloadToPNG(pngBytes, text);
+  const blob = new Blob([final], { type: 'image/png' });
+  state.pngBlob = blob;
   // FIX: pngBlobURL removed — downloadStringImage creates a fresh URL each time
 }
 
@@ -379,9 +372,9 @@ function makeMinimalPNG() {
   const sig = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
 
   const ihdrData = new Uint8Array(13);
-  ihdrData[0]=0; ihdrData[1]=0; ihdrData[2]=0; ihdrData[3]=8;
-  ihdrData[4]=0; ihdrData[5]=0; ihdrData[6]=0; ihdrData[7]=8;
-  ihdrData[8]=8; ihdrData[9]=2; ihdrData[10]=0; ihdrData[11]=0; ihdrData[12]=0;
+  ihdrData[0] = 0; ihdrData[1] = 0; ihdrData[2] = 0; ihdrData[3] = 8;
+  ihdrData[4] = 0; ihdrData[5] = 0; ihdrData[6] = 0; ihdrData[7] = 8;
+  ihdrData[8] = 8; ihdrData[9] = 2; ihdrData[10] = 0; ihdrData[11] = 0; ihdrData[12] = 0;
   const ihdr = buildPNGChunk('IHDR', ihdrData);
 
   const ROW = 1 + 8 * 3;
@@ -390,7 +383,7 @@ function makeMinimalPNG() {
     const base = r * ROW;
     raw[base] = 0;
     for (let p = 0; p < 8; p++) {
-      raw[base + 1 + p * 3]     = 0x0a;
+      raw[base + 1 + p * 3] = 0x0a;
       raw[base + 1 + p * 3 + 1] = 0x0a;
       raw[base + 1 + p * 3 + 2] = 0x0f;
     }
@@ -400,23 +393,23 @@ function makeMinimalPNG() {
   const iend = buildPNGChunk('IEND', new Uint8Array(0));
 
   const total = sig.length + ihdr.length + idat.length + iend.length;
-  const out   = new Uint8Array(total);
+  const out = new Uint8Array(total);
   let pos = 0;
   for (const part of [sig, ihdr, idat, iend]) { out.set(part, pos); pos += part.length; }
   return out;
 }
 
 function deflateRaw(data) {
-  const BLOCK  = 65535;
+  const BLOCK = 65535;
   const blocks = Math.ceil(data.length / BLOCK) || 1;
-  const out    = new Uint8Array(2 + blocks * 5 + data.length + 4);
+  const out = new Uint8Array(2 + blocks * 5 + data.length + 4);
   let pos = 0;
   out[pos++] = 0x78; out[pos++] = 0x01;
 
   let offset = 0;
   for (let b = 0; b < blocks; b++) {
-    const end  = Math.min(offset + BLOCK, data.length);
-    const len  = end - offset;
+    const end = Math.min(offset + BLOCK, data.length);
+    const len = end - offset;
     const last = (b === blocks - 1) ? 1 : 0;
     const nlen = (~len) & 0xffff;
     out[pos++] = last;
@@ -429,17 +422,16 @@ function deflateRaw(data) {
   let s1 = 1, s2 = 0;
   for (let i = 0; i < data.length; i++) {
     s1 = (s1 + data[i]) % 65521;
-    s2 = (s2 + s1)      % 65521;
+    s2 = (s2 + s1) % 65521;
   }
   const adler = (s2 << 16) | s1;
   out[pos++] = (adler >> 24) & 0xff; out[pos++] = (adler >> 16) & 0xff;
-  out[pos++] = (adler >>  8) & 0xff; out[pos++] =  adler        & 0xff;
+  out[pos++] = (adler >> 8) & 0xff; out[pos++] = adler & 0xff;
   return out.subarray(0, pos);
 }
 
 function downloadStringImage() {
   if (!state.pngBlob) {
-    showToast('No PNG ready — build it first.', true);
     return;
   }
 
@@ -448,24 +440,19 @@ function downloadStringImage() {
     const url = URL.createObjectURL(state.pngBlob);
     window.open(url, '_blank');
     setTimeout(() => URL.revokeObjectURL(url), 10000);
-    showToast('Opened in new tab — long-press image to save.');
     announce('Opened PNG in new tab. Long-press to save.');
-    document.getElementById('floatingDownload').style.display = 'none';
     return;
   }
 
   const url = URL.createObjectURL(state.pngBlob);
-  const a   = document.createElement('a');
-  a.href     = url;
+  const a = document.createElement('a');
+  a.href = url;
   a.download = 'base64-string.png';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 10000);
-
-  showToast('Downloading base64-string.png…');
   announce('Download started: base64-string.png');
-  document.getElementById('floatingDownload').style.display = 'none';
 }
 
 // FIX: quickDecode targets #pasteDetails by id — not a blind querySelector('details')
@@ -479,22 +466,22 @@ function quickDecode() {
 }
 
 function clearAll() {
-  uploadedImage        = null;
-  state.pngBlob        = null;
-  state.encoded        = '';
+  uploadedImage = null;
+  state.pngBlob = null;
+  state.encoded = '';
   state.encodePassword = null;
 
-  document.getElementById('fileInput').value            = '';
-  document.getElementById('setupPasswordInput').value   = '';
+  document.getElementById('fileInput').value = '';
+  document.getElementById('setupPasswordInput').value = '';
   document.getElementById('setupPasswordErr').style.display = 'none';
 
-  ['imgStrip','saveSection','sizeWarn','copyAlert','pngDownloadPanel',
-   'encodeMainArea','encodePasswordSetup']
-    .forEach(id => { document.getElementById(id).style.display = 'none'; });
+  ['imgStrip', 'saveSection', 'sizeWarn', 'copyAlert', 'pngDownloadPanel',
+    'encodeMainArea', 'encodePasswordSetup']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
 
   document.getElementById('encodePreSelect').style.display = 'block';
-  document.getElementById('floatingDownload').style.display = 'none';
-  document.getElementById('copyCard').classList.remove('done');
+  const copyCardEl = document.getElementById('copyCard');
+  if (copyCardEl) copyCardEl.classList.remove('done');
   document.getElementById('pngCard').classList.remove('done');
 
   updateAdv();
@@ -510,7 +497,7 @@ function detectMime(b64) {
     if (b[0] === 0x89 && b[1] === 0x50) return 'image/png';
     if (b[0] === 0x47 && b[1] === 0x49) return 'image/gif';
     if (b[0] === 0x52 && b[1] === 0x49) return 'image/webp';
-    if (b[0] === 0x3C)                  return 'image/svg+xml';
+    if (b[0] === 0x3C) return 'image/svg+xml';
   } catch (e) { /* fall through */ }
   return 'image/jpeg';
 }

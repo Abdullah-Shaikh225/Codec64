@@ -45,12 +45,17 @@ function showPasswordPrompt() {
           This image was encoded with a password.<br>
           <strong style="color:#6affdb;">Enter the password to restore your image.</strong>
         </p>
+        <div style="position:relative;">
         <input type="password" id="decryptPasswordInput" class="url-inp password-inp"
           style="width:100%;background:#1c1c2a;border:1px solid #3a3a55;
                  border-radius:10px;color:#eeeef5;font-family:'Space Mono',monospace;
-                 font-size:14px;padding:12px 14px;outline:none;margin-bottom:16px;
+                 font-size:14px;padding:12px 44px 12px 14px;outline:none;margin-bottom:16px;
                  transition:border-color .2s;"
           placeholder="Enter password…" autocomplete="off">
+        <button type="button" onclick="togglePasswordVisibility('decryptPasswordInput', this)"
+          style="position:absolute;right:10px;top:12px;background:none;border:none;color:#9898b8;cursor:pointer;font-size:0.85rem;padding:2px 4px;font-family:'Space Mono',monospace;"
+          aria-label="Toggle password visibility">Show</button>
+        </div>
         <div id="decryptError"
           style="display:none;color:#ff6b6b;font-family:'Space Mono',monospace;
                  font-size:11px;margin-bottom:12px;padding:8px 12px;

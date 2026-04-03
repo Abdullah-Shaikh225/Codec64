@@ -11,8 +11,8 @@
  */
 
 const state = {
-  encoded:     '',
-  pngBlob:     null,   // raw Blob; downloadStringImage creates a fresh URL each time
+  encoded: '',
+  pngBlob: null,   // raw Blob; downloadStringImage creates a fresh URL each time
   currentSnip: 'html'
 };
 
@@ -25,34 +25,34 @@ function announce(msg) {
 function setStep(n) {
   const labels = ['Upload', 'Save', 'Restore'];
   for (let i = 1; i <= 3; i++) {
-    const num  = document.getElementById('sn' + i);
+    const num = document.getElementById('sn' + i);
     const line = document.getElementById('sl' + i);
     if (i < n) {
       num.classList.add('done'); num.classList.remove('active');
       num.textContent = '✓';
-      num.setAttribute('aria-label', `Step ${i}: ${labels[i-1]} — completed`);
+      num.setAttribute('aria-label', `Step ${i}: ${labels[i - 1]} — completed`);
       num.removeAttribute('aria-current');
     } else if (i === n) {
       num.classList.add('active'); num.classList.remove('done');
       num.textContent = i;
-      num.setAttribute('aria-label', `Step ${i}: ${labels[i-1]} — current step`);
+      num.setAttribute('aria-label', `Step ${i}: ${labels[i - 1]} — current step`);
       num.setAttribute('aria-current', 'step');
     } else {
       num.classList.remove('done', 'active');
       num.textContent = i;
-      num.setAttribute('aria-label', `Step ${i}: ${labels[i-1]} — not yet reached`);
+      num.setAttribute('aria-label', `Step ${i}: ${labels[i - 1]} — not yet reached`);
       num.removeAttribute('aria-current');
     }
     if (line) line.classList.toggle('done', i < n);
   }
-  announce('Moved to step ' + n + ': ' + labels[n-1]);
+  announce('Moved to step ' + n + ': ' + labels[n - 1]);
 }
 
 function toggleAdv() {
-  const panel  = document.getElementById('advPanel');
-  const arr    = document.getElementById('advArr');
+  const panel = document.getElementById('advPanel');
+  const arr = document.getElementById('advArr');
   const toggle = document.getElementById('advToggle');
-  const open   = panel.classList.toggle('open');
+  const open = panel.classList.toggle('open');
   arr.classList.toggle('open', open);
   toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
   announce(open ? 'Advanced tools expanded.' : 'Advanced tools collapsed.');
@@ -60,8 +60,8 @@ function toggleAdv() {
 
 const SNIPS = {
   html: d => `<img src="${d}" alt="image" />`,
-  css:  d => `.element {\n  background-image: url('${d}');\n  background-size: cover;\n}`,
-  md:   d => `![image](${d})`,
+  css: d => `.element {\n  background-image: url('${d}');\n  background-size: cover;\n}`,
+  md: d => `![image](${d})`,
   json: d => `{\n  "image": "${d}"\n}`
 };
 
@@ -97,9 +97,9 @@ function copyRaw() {
 
 function updateAdv() {
   if (!state.encoded) {
-    document.getElementById('rawPreview').textContent  = 'Upload an image to see the raw string.';
+    document.getElementById('rawPreview').textContent = 'Upload an image to see the raw string.';
     document.getElementById('snipContent').textContent = 'Upload an image above to generate snippets.';
-    ['stChars','stSize','stFmt','stOh'].forEach(id => {
+    ['stChars', 'stSize', 'stFmt', 'stOh'].forEach(id => {
       document.getElementById(id).textContent = '—';
     });
     return;
@@ -110,16 +110,16 @@ function updateAdv() {
   document.getElementById('snipContent').textContent =
     SNIPS[state.currentSnip](state.encoded);
 
-  const m        = state.encoded.match(/^data:([^;,]+)/);
-  const fmt      = m ? m[1].replace('image/', '').toUpperCase() : '?';
-  const b64len   = state.encoded.length - state.encoded.indexOf(',') - 1;
+  const m = state.encoded.match(/^data:([^;,]+)/);
+  const fmt = m ? m[1].replace('image/', '').toUpperCase() : '?';
+  const b64len = state.encoded.length - state.encoded.indexOf(',') - 1;
   const origBytes = Math.ceil(b64len * 0.75);
-  const overhead  = (((state.encoded.length / origBytes) - 1) * 100).toFixed(0);
+  const overhead = (((state.encoded.length / origBytes) - 1) * 100).toFixed(0);
 
   document.getElementById('stChars').textContent = state.encoded.length.toLocaleString();
-  document.getElementById('stSize').textContent  = formatBytes(origBytes);
-  document.getElementById('stFmt').textContent   = fmt;
-  document.getElementById('stOh').textContent    = '+' + overhead + '%';
+  document.getElementById('stSize').textContent = formatBytes(origBytes);
+  document.getElementById('stFmt').textContent = fmt;
+  document.getElementById('stOh').textContent = '+' + overhead + '%';
 }
 
 function flashPanel(flashId) {
@@ -133,16 +133,16 @@ function flashPanel(flashId) {
 window.addEventListener('DOMContentLoaded', () => {
   // Drag-drop setup
   const dz = document.getElementById('dropZone');
-  dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('over'); });
-  dz.addEventListener('dragleave', ()  => dz.classList.remove('over'));
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('over'));
   dz.addEventListener('drop', e => {
     e.preventDefault(); dz.classList.remove('over');
     handleFile(e.dataTransfer.files[0]);
   });
 
   const dd = document.getElementById('decodeDrop');
-  dd.addEventListener('dragover',  e => { e.preventDefault(); dd.classList.add('over'); });
-  dd.addEventListener('dragleave', ()  => dd.classList.remove('over'));
+  dd.addEventListener('dragover', e => { e.preventDefault(); dd.classList.add('over'); });
+  dd.addEventListener('dragleave', () => dd.classList.remove('over'));
   dd.addEventListener('drop', e => {
     e.preventDefault(); dd.classList.remove('over');
     handlePngUpload(e.dataTransfer.files[0]);
@@ -184,7 +184,7 @@ function legacyCopy(text, onOk, onFail) {
   const isIOS = /ipad|iphone/i.test(navigator.userAgent);
   if (isIOS) {
     ta.contentEditable = 'true';
-    ta.readOnly        = false;
+    ta.readOnly = false;
     const range = document.createRange();
     range.selectNodeContents(ta);
     const sel = window.getSelection();
@@ -278,7 +278,7 @@ function showToast(msg, isError = false) {
 }
 
 function formatBytes(n) {
-  if (n < 1024)    return n + ' B';
+  if (n < 1024) return n + ' B';
   if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
   return (n / 1048576).toFixed(2) + ' MB';
 }
@@ -291,17 +291,17 @@ function showView(viewId) {
   const target = document.getElementById(viewId);
   if (target) target.classList.add('active');
 
-  const homeBtn    = document.getElementById('homeBtn');
+  const homeBtn = document.getElementById('homeBtn');
   const mainTagline = document.getElementById('mainTagline');
 
   if (viewId === 'onboardingView') {
-    if (homeBtn)     homeBtn.style.display     = 'none';
+    if (homeBtn) homeBtn.style.display = 'none';
     if (mainTagline) mainTagline.style.display = 'block';
     if (window.history.replaceState) {
       window.history.replaceState(null, null, window.location.pathname);
     }
   } else {
-    if (homeBtn)     homeBtn.style.display     = 'block';
+    if (homeBtn) homeBtn.style.display = 'block';
     if (mainTagline) mainTagline.style.display = 'none';
     window.location.hash = viewId;
   }
@@ -311,4 +311,16 @@ function scrollToStart() {
   document.getElementById('onboardingView').scrollIntoView({
     behavior: 'smooth', block: 'start'
   });
+}
+
+function togglePasswordVisibility(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = 'Hide';
+  } else {
+    input.type = 'password';
+    btn.textContent = 'Show';
+  }
 }
