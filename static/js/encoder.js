@@ -119,6 +119,14 @@ function handleFile(file) {
 
   uploadedImage = file;
 
+  // Track upload
+  if (typeof trackEvent === 'function') {
+    trackEvent("image_uploaded", "User Action", "Upload", {
+      file_type: file.type,
+      file_size_kb: Math.round(file.size / 1024)
+    });
+  }
+
   const blobURL = URL.createObjectURL(file);
   const tempImg = new Image();
 
@@ -266,6 +274,12 @@ function performLazyEncoding(onSuccess, onError) {
     }
 
     state.encoded = dataURL;
+
+    // Track encoding
+    if (typeof trackEvent === 'function') {
+      trackEvent("image_encoded", "Processing", "Encode");
+    }
+
     updateAdv();
     if (onSuccess) onSuccess();
   };
@@ -433,6 +447,11 @@ function deflateRaw(data) {
 function downloadStringImage() {
   if (!state.pngBlob) {
     return;
+  }
+
+  // Track download
+  if (typeof trackEvent === 'function') {
+    trackEvent("image_downloaded", "Action", "Download");
   }
 
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);

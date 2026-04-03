@@ -4,7 +4,97 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Base64 Image Codec</title>
+  <title>Codec64 — Encode, Decode & Convert Images Online for Free</title>
+
+  <!-- SEO Meta Tags -->
+  <meta name="description"
+    content="Use Codec64 to encode images into private files, restore them instantly, or convert between PNG, JPEG, and WEBP. Everything runs locally in your browser — no uploads, no data stored, 100% free.">
+  <meta name="keywords"
+    content="encode image, decode image, restore image, base64 encoder, image to base64, base64 to image, image converter, PNG converter, JPEG converter, WEBP converter, privacy image tool, encrypt image, password protect image online">
+  <meta name="author" content="Abdullah Shaikh">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://codec64.vercel.app/app.html">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://codec64.vercel.app/app.html">
+  <meta property="og:title" content="Codec64 — Encode, Decode & Convert Images Online">
+  <meta property="og:description"
+    content="Turn images into private files, restore them anytime, or convert formats. 100% browser-based, no uploads needed.">
+  <meta property="og:site_name" content="Codec64">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Codec64 — Encode, Decode & Convert Images Online">
+  <meta name="twitter:description"
+    content="Turn images into private files, restore them anytime, or convert formats. 100% browser-based, no uploads needed.">
+
+  <!-- Structured Data (JSON-LD) — HowTo for the guide page -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to Encode and Decode Images with Codec64",
+    "description": "Step-by-step guide to securely encode images into private files and restore them using Codec64.",
+    "step": [
+      {
+        "@type": "HowToStep",
+        "name": "Upload your image",
+        "text": "Choose any image from your device to encode."
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Add details or password",
+        "text": "Optionally add a note or set a password for extra security."
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Download private file",
+        "text": "Download the encoded PNG image. Your original is hidden inside."
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Restore anytime",
+        "text": "Upload the encoded PNG back to Codec64 to instantly recover your original image."
+      }
+    ],
+    "tool": {
+      "@type": "HowToTool",
+      "name": "Codec64 Web Application"
+    }
+  }
+  </script>
+
+  <!-- FAQ Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Is Codec64 a free image encoder and decoder?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes, Codec64 is completely free to use with no signups or subscriptions required." }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I encode images online without uploading to a server?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes, everything happens locally in your browser. No images are uploaded to any server." }
+      },
+      {
+        "@type": "Question",
+        "name": "Is there any loss in image quality?",
+        "acceptedAnswer": { "@type": "Answer", "text": "No, your original image is restored exactly as it was with zero quality loss." }
+      },
+      {
+        "@type": "Question",
+        "name": "What happens if I forget my password?",
+        "acceptedAnswer": { "@type": "Answer", "text": "If you forget your password, the image cannot be recovered. Codec64 does not store passwords or data." }
+      }
+    ]
+  }
+  </script>
+
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-M991NFRCWE"></script>
   <script>
@@ -472,7 +562,7 @@
           <p style="color:var(--muted); font-size:1.15rem; max-width:600px; margin:0 auto 25px auto;">
             A free online tool that lets you securely encode, restore, and convert images locally inside your browser.
           </p>
-          <button class="cta-btn" onclick="window.location.href='app.html'">Try Codec64 Now ➔</button>
+          <button class="cta-btn" onclick="window.location.href='index.html'">Try Codec64 Now ➔</button>
         </div>
 
         <div style="position:relative;">
@@ -646,7 +736,7 @@
                   online
                   solution to manage your images seamlessly, Codec64 has you completely covered.</p>
                 <button class="cta-btn" style="width:100%; max-width:300px;"
-                  onclick="window.location.href='app.html'">Try
+                  onclick="window.location.href='index.html'">Try
                   Codec64 Now
                   ➔</button>
               </div>
@@ -663,7 +753,7 @@
         </div><!-- /position:relative wrapper -->
       </div>
 
-      <footer style="margin-top:48px;text-align:center;font-family:var(--mono);font-size:11px;
+      <footer style="margin-top:120px;padding-bottom:40px;text-align:center;font-family:var(--mono);font-size:11px;
                color:var(--muted2);opacity:.7;transition:opacity .3s;" onmouseover="this.style.opacity='1'"
         onmouseout="this.style.opacity='0.7'">
         Project made by <strong style="color:var(--text);font-weight:700;">Abdullah Shaikh</strong>
@@ -1128,24 +1218,57 @@
   <script src="static/js/converter.js"></script>
 
   <script>
-    // Swipe hint — auto-hide after 3.5s or on first scroll
+    // Swipe hint — only shows when guide grid enters viewport, then auto-hides
     (function () {
       const grid = document.getElementById('guideGrid');
       const hint = document.getElementById('swipeHint');
       if (!grid || !hint) return;
 
+      // Hide by default until visible
+      hint.style.display = 'none';
+
       let dismissed = false;
+      let timer = null;
+
       function dismiss() {
         if (dismissed) return;
         dismissed = true;
         hint.classList.add('hidden');
+        if (timer) clearTimeout(timer);
         setTimeout(() => { hint.style.display = 'none'; }, 500);
       }
 
-      grid.addEventListener('scroll', dismiss, { once: true, passive: true });
-      grid.addEventListener('touchmove', dismiss, { once: true, passive: true });
-      setTimeout(dismiss, 3500);
+      function activate() {
+        // Only show on mobile (< 800px)
+        if (window.innerWidth >= 800) return;
+        hint.style.display = 'block';
+        grid.addEventListener('scroll', dismiss, { once: true, passive: true });
+        grid.addEventListener('touchmove', dismiss, { once: true, passive: true });
+        timer = setTimeout(dismiss, 4000);
+      }
+
+      // Use IntersectionObserver to detect when the grid is visible
+      if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting && !dismissed) {
+              activate();
+              observer.disconnect();
+            }
+          });
+        }, { threshold: 0.3 });
+        observer.observe(grid);
+      }
     })();
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // Small delay to ensure gtag is initialized properly
+      setTimeout(() => {
+        if (typeof trackEvent === 'function') {
+          trackEvent("entered_app", "Navigation", "Landing to App");
+        }
+      }, 500);
+    });
   </script>
 
 </body>

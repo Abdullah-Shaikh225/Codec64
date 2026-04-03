@@ -141,6 +141,14 @@ async function handleDecryption(str) {
 function handlePngUpload(file) {
   if (!file) return;
 
+  // Track upload
+  if (typeof trackEvent === 'function') {
+    trackEvent("image_uploaded", "User Action", "Upload", {
+      file_type: file.type,
+      file_size_kb: Math.round(file.size / 1024)
+    });
+  }
+
   const okEl = document.getElementById('pngOk');
   const errEl = document.getElementById('pngErr');
   okEl.style.display = 'none';
@@ -311,6 +319,11 @@ function renderDecoded(raw) {
   img._approxBytes = approxBytes;
 
   img.onload = () => {
+    // Track restore
+    if (typeof trackEvent === 'function') {
+      trackEvent("image_restored", "Processing", "Decode");
+    }
+
     const fmt = mime.split('/').pop().toUpperCase();
     document.getElementById('decodedMeta').textContent =
       fmt + ' · ~' + formatBytes(approxBytes) +

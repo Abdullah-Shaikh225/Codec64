@@ -4,7 +4,63 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Codec64 - Secure Image Encoding</title>
+  <title>Codec64 — Free Online Image Encoder, Decoder & Privacy Tool</title>
+
+  <!-- SEO Meta Tags -->
+  <meta name="description"
+    content="Codec64 is a free, privacy-first online tool to encode, decode, and convert images securely in your browser. No uploads, no signups, no data stored. Protect your images with password encryption instantly.">
+  <meta name="keywords"
+    content="image encoder, image decoder, base64 image, encode image online, decode image online, image privacy tool, password protect image, convert image format, PNG to JPEG, free image tool, client-side image encoder, secure image sharing">
+  <meta name="author" content="Abdullah Shaikh">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://codec64.vercel.app/">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://codec64.vercel.app/">
+  <meta property="og:title" content="Codec64 — Free Online Image Encoder & Privacy Tool">
+  <meta property="og:description"
+    content="Encode, decode, and convert images securely in your browser. No uploads, no signups. Password-protect your images for free.">
+  <meta property="og:site_name" content="Codec64">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Codec64 — Free Online Image Encoder & Privacy Tool">
+  <meta name="twitter:description"
+    content="Encode, decode, and convert images securely in your browser. No uploads, no signups. Password-protect your images for free.">
+
+  <!-- Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Codec64",
+    "url": "https://codec64.vercel.app/",
+    "description": "A free, privacy-first online tool to encode, decode, and convert images securely in your browser.",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "Any",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "author": {
+      "@type": "Person",
+      "name": "Abdullah Shaikh",
+      "email": "abdullahictmail@gmail.com"
+    },
+    "featureList": [
+      "Encode images to Base64",
+      "Decode images from Base64",
+      "Password-protect encoded images",
+      "Convert image formats (PNG, JPEG, WEBP)",
+      "100% client-side — no server uploads",
+      "No signup required"
+    ]
+  }
+  </script>
+
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-M991NFRCWE"></script>
   <script>
@@ -254,10 +310,72 @@
         padding-bottom: 20px;
       }
     }
+
+    /* Help & Support Button */
+    .help-btn {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      z-index: 100;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 10px 20px;
+      border-radius: 40px;
+      color: var(--text);
+      font-family: var(--sans);
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .help-btn:hover {
+      background: rgba(106, 255, 219, 0.1);
+      border-color: rgba(106, 255, 219, 0.4);
+      color: var(--teal);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(106, 255, 219, 0.15);
+    }
+
+    @media (max-width: 600px) {
+      .help-btn {
+        top: auto;
+        bottom: 24px;
+        right: 24px;
+        position: fixed;
+        padding: 0;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--accent), var(--teal));
+        border: none;
+        box-shadow: 0 4px 16px rgba(106, 255, 219, 0.3);
+      }
+
+      .help-btn span[aria-hidden="true"] {
+        font-size: 1.4rem;
+      }
+
+      .help-btn .help-btn-text {
+        display: none;
+      }
+    }
   </style>
 </head>
 
 <body>
+
+  <!-- Floating Help & Support -->
+  <a href="contact.html" class="help-btn" aria-label="Help and Support">
+    <span aria-hidden="true">💬</span> <span class="help-btn-text">Help & Support</span>
+  </a>
 
   <div class="orb orb-a" aria-hidden="true"></div>
   <div class="orb orb-b" aria-hidden="true"></div>
@@ -273,7 +391,7 @@
       </p>
 
       <div class="hero-actions">
-        <a href="app.html" class="btn-primary">Start Encoding</a>
+        <a href="app.html" class="btn-primary" id="startBtn">Start Encoding/Decoding</a>
         <a href="app.html#howItWorksView" class="btn-secondary">How it works</a>
       </div>
 
@@ -299,7 +417,7 @@
   </section>
 
   <footer class="landing-footer"
-    style="position:absolute; bottom:20px; width:100%; text-align:center; font-family:var(--mono); font-size:11px; color:var(--muted2); opacity:.7; transition:opacity .3s; z-index:10;"
+    style="position:relative; margin-top:120px; padding-bottom:40px; width:100%; text-align:center; font-family:var(--mono); font-size:11px; color:var(--muted2); opacity:.7; transition:opacity .3s; z-index:10;"
     onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">
     Project made by <strong style="color:var(--text);font-weight:700;">Abdullah Shaikh</strong>
     <div style="margin-top:8px;display:flex;gap:12px;justify-content:center;align-items:center;">
@@ -317,6 +435,21 @@
     </div>
   </footer>
 
+  <script>
+    function trackEvent(name, category, label, extra = {}) {
+      if (typeof gtag === "function") {
+        gtag('event', name, {
+          event_category: category,
+          event_label: label,
+          ...extra
+        });
+      }
+    }
+
+    document.getElementById("startBtn")?.addEventListener("click", () => {
+      trackEvent("start_encoding_click", "CTA", "Hero Button");
+    });
+  </script>
 </body>
 
 </html>

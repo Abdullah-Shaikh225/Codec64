@@ -294,6 +294,11 @@ function showView(viewId) {
   const homeBtn = document.getElementById('homeBtn');
   const mainTagline = document.getElementById('mainTagline');
 
+  // Track feature selection
+  if (viewId === 'encodeView') trackEvent("feature_selected", "Feature", "Encode");
+  else if (viewId === 'decodeView') trackEvent("feature_selected", "Feature", "Decode");
+  else if (viewId === 'convertView') trackEvent("feature_selected", "Feature", "Convert");
+
   if (viewId === 'onboardingView') {
     if (homeBtn) homeBtn.style.display = 'none';
     if (mainTagline) mainTagline.style.display = 'block';
@@ -322,5 +327,16 @@ function togglePasswordVisibility(inputId, btn) {
   } else {
     input.type = 'password';
     btn.textContent = 'Show';
+  }
+}
+
+// Global Event Tracking
+function trackEvent(name, category, label, extra = {}) {
+  if (typeof gtag === "function") {
+    gtag('event', name, {
+      event_category: category,
+      event_label: label,
+      ...extra
+    });
   }
 }
